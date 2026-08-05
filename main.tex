@@ -1,0 +1,166 @@
+\documentclass[a4paper,12pt]{article}
+
+% \usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+\usepackage[left=3.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}
+\linespread{1.5}
+\usepackage{mathptmx}
+\usepackage{courier}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[style=numeric, sorting=none]{biblatex}
+\usepackage{csquotes}
+
+\addbibresource{bibliografia.bib}
+\hypersetup{hidelinks}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{gray!10},
+    commentstyle=\color{green!50!black},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{gray},
+    stringstyle=\color{orange},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    numbers=left,
+    numbersep=5pt,
+    showstringspaces=false,
+    tabsize=2,
+    frame=single
+}
+\lstdefinelanguage{json}{
+    basicstyle=\ttfamily\footnotesize,
+    numbers=none,
+    breaklines=true,
+    showstringspaces=false,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    literate=
+     *{0}{{{\color{blue}0}}}{1}
+      {1}{{{\color{blue}1}}}{1}
+      {2}{{{\color{blue}2}}}{1}
+      {3}{{{\color{blue}3}}}{1}
+      {4}{{{\color{blue}4}}}{1}
+      {5}{{{\color{blue}5}}}{1}
+      {6}{{{\color{blue}6}}}{1}
+      {7}{{{\color{blue}7}}}{1}
+      {8}{{{\color{blue}8}}}{1}
+      {9}{{{\color{blue}9}}}{1}
+      {:}{{{\color{black}{:}}}}{1}
+      {,}{{{\color{black}{,}}}}{1}
+      {\{}{{{\color{red}{\{}}}}{1}
+      {\}}{{{\color{red}{\}}}}}{1}
+      {[}{{{\color{red}{[}}}}{1}
+      {]}{{{\color{red}{]}}}}{1},
+}
+\lstset{style=mystyle}
+
+\author{Claudio Lucisano}
+\date{}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\begin{document}
+\begin{titlepage}
+\input{sections/Title}
+\end{titlepage}
+\newpage
+\tableofcontents
+\newpage
+\section{Introduction}
+\input{sections/Introduction}
+\newpage
+\newpage
+\section{Motivation and Threat Model}
+\newpage
+\section{Background}
+\newpage
+\section{System Design}
+\newpage
+\section{Security Analysis}
+\newpage
+\section{Descrizione del progetto realizzato}
+Descrivere l'architettura del progetto, la sua implementazione e i risultati ottenuti.
+\newpage
+\section{First Steps}
+\subsection{File Structure}
+To start approaching the concept, it is imperative to subdivide the problem into smaller ones. The first problem that came to mind was to find a way to have into a single file multiple parts, each with its own encryption.
+To solve this problem, we did create a JSON structure that could contain each encrypted section of the file, i.e. an array containing a single object per section that has two properties: the policy requested to decipher the ciphertext and the ciphertext itself.
+\begin{lstlisting}[language=JSON, caption={.abe format v1}]
+{
+  "format": "abe-doc",
+  "version": 1,
+  "sections": [
+    {
+      "policy": "livello = x",
+      "chiphertext": CIPHERTEXT_Lx
+    },
+    {
+      "policy": "livello = y",
+      "chiphertext": CIPHERTEXT_Ly
+    },
+    {
+      "policy": "livello = z",
+      "chiphertext": CIPHERTEXT_Lz
+    }
+  ]
+}
+\end{lstlisting}
+It's quite easy to point out that this implementation is very inefficient when the number of sections grows. To optimize the amount of operations needed and the structure of the document itself, it was improved in the version 2 of the structure:
+\begin{lstlisting}[language=JSON, caption={.abe v2}]
+{
+  "format": "abe-doc",
+  "version": 1,
+  "sections": [
+    {
+      "group": 0
+    },
+    {
+      "group": 1
+    },
+    {
+      "group": 2
+    },
+    {
+      "group": 1
+    },
+    {
+      "group": 0
+    }
+  ],
+  "groups": [
+    {
+      "policy": "livello >= 3",
+      "ciphertext": CIPHERTEXT_L3
+    },
+    {
+      "policy": "livello >= 2",
+      "ciphertext": CIPHERTEXT_L2
+    },
+    {
+      "policy": "livello >= 1",
+      "ciphertext": CIPHERTEXT_L1
+    }
+  ]
+}
+\end{lstlisting}
+This structure provides one key feature: the ability to call the decrypt function $n$ times, where $n$ is the number of unique attributes used to rules the sections. This is a more sustainable approach than v1, since, in that case, the decrypt function would be called exactly $m$ times, where $m$ is the amount of each section in the document. It's a fair assumption to say that $m$, \textit{usually}, is greater than $n$.
+\subsection{File Viewer}
+Having a structured document by itself is useless if there is not a way to read and edit it, so it was necessary to create such application. The file viewer operates as a simple file editor, with the ability to encrypt and decrypt a file using a user's private key. 
+% TODO: POSSIBLE EDIT NEEDED (Keycloak > stored key)
+This private key, as seen before, 
+% Reference a previous explaination of the ABE
+has to be created and stored beforehand. A user could also authenticate itself via \textbf{Keycloak} login and so a token with its attribute will be elaborated and used in substitution of the user's key.
+\section{Conclusions}
+\input{sections/Conclusions}
+\newpage
+\section{Bibliography}
+\printbibliography
+
+\end{document}
