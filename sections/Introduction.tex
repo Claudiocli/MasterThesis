@@ -12,8 +12,25 @@ A second, more institutional, example involves OpenAI: in december 2024, the Ita
 Also Anthropic was acting in regard of the guarantees that have to be assumed by a vendor, in particular it had to update its customer terms\cite{anthropic2025terms}. They explicitly stated that each conversation made with Claude could be used for model training, with the exception of Claude for Work, Claude Enterprise, Claude Gov and any API-based access\cite{anthropic2025terms}.
 
 \subsection{Activities done and Results}
-Fornire una breve sintesi delle attività che sono state svolte durante il periodo di tesi e dei principali risultati ottenuti (applicazioni o sistemi sviluppati). (circa 1 pagina)
-
+In this thesis, we have designed and implemented a plugin for AI agents that allows to decrypt files using Attribute-Based Encryption (ABE) in order to ensure that only authorized users and authorized AI Agents can access specific parts of the file. The plugin is designed to be easily integrated into existing AI agents, providing a seamless way to enhance security and privacy in AI-driven environments.
+Such security enhancement is achieved by encrypting files with ABE, which allows for fine-grained access control based on user and AI agent attributes. The plugin intercepts file access requests from the AI agent, authenticates the user and checks, via server, if both the user's attributes and the agent's attributes match the encryption policy; thus the server decrypts the specific parts of the file that both the user and \emph{that} agent are authorized to see and returns it to the agent. This approach ensures that sensitive information remains protected when accessed by AI agents.
 \subsection{Technologies and Tools}
-% \section{Tecnologie e strumenti utilizzati per lo sviluppo del progetto}
-% Fornire una descrizione delle tecnologie e degli strumenti utilizzati per la realizzazione del progetto (massimo 1 pagina per ogni tecnologia/strumento).
+To achieve the goals of this thesis, several technologies and tools have been utilized.
+The core of the security mechanism is based on Attribute-Based Encryption (ABE), more in particular we have used the open source library \textbf{OpenABE}\cite{openabe}, which we had to upgrade to a more recent version by updating its dependecies and fixing some bugs that were present in the original code.
+
+Another important component of the system is the authentication and authorization mechanism, which is implemented using \textbf{Keycloak}, an open-source identity and access management solution. Keycloak provides a robust framework for managing user identities, roles, and permissions, which is essential for enforcing access control policies in the context of ABE.
+
+The plugin is designed to be compatible with AI agents that support plugin integration, and it has been tested with specific AI agents to ensure proper functionality.
+The AI agents used for testing are:
+% TODO: add more AI agents if needed
+\begin{itemize}
+    \item \textbf{Claude Code}, an AI agent developed by Anthropic; 
+    \item \textbf{Codex}, an AI agent developed by OpenAI;
+    \item \textbf{Copilot for VSCode}, an AI agent developed by Microsoft, integrated into the Visual Studio Code IDE.
+\end{itemize}
+
+The server-side component of the system is implemented in Python and it was containerized using \textbf{Rancher Desktop}, a tool that allows to run Kubernetes clusters on a local machine. This setup enables easy deployment and management of the server component, ensuring scalability and reliability in handling decryption requests from AI agents.
+Alongside the server container, there were deployed two other containers: one for the Keycloak server and another for a \textbf{PostgreSQL} database, which is used by Keycloak to store user and role information. This containerized approach simplifies the deployment process and allows for easy scaling of the system as needed.
+
+\subsection{Thesis outline}
+% TODO: ROADMAP

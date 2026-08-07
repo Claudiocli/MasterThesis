@@ -1,0 +1,18 @@
+\subsection{Problem Statement}
+The main problem that this thesis aims to solve comes from a consideration while thinking how AI can be implemented in a blue team scenario.
+Even if this topic could be an argument of discussion by itself, many perplexities arise when we think how data is exchanged considering AI agents actively inside the attack surface.
+
+In particular, the problem is that AI agents are not able to distinguish between sensitive and non-sensitive data, and they are not able to understand the context of the data they are processing. This means that if an AI agent is given access to sensitive data, it could potentially leak that data to an attacker, either intentionally or unintentionally.
+Of course, it is imperative to also consider the intrinsic vulnerability of AI agents to prompt injection attacks, which could be just another mean to the exfiltration of sensitive data as upmentioned.
+
+One method to mitigate this problem would be to utilize cryptography, but that alone comes with its own set of challenges. More in detail, both an AI agent and a user cannot benefit from data that is encrypted with a symmetric key: it is easy to see how both of them would require a decryption of said  data, otherwhise they would not be able even to understand it, leave alone to use it.
+
+% TODO: approfondire il concetto della homomorphic e citare i paper scaricati
+One possible alternative could be Homomorphic Encryption and, surely, it is a very promising topic, but as for today its computational limitations make it not suitable for a real-world scenario, especially if we consider the amount of data that an AI agent should process.
+\subsection{Actors and Goals}
+
+\subsection{Assumptions}
+
+\subsection{Adversary Model}
+
+\subsection{Security Goals}
