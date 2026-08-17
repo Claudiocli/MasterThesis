@@ -7,11 +7,60 @@ Of course, it is imperative to also consider the intrinsic vulnerability of AI a
 
 One method to mitigate this problem would be to utilize cryptography, but that alone comes with its own set of challenges. More in detail, both an AI agent and a user cannot benefit from data that is encrypted with a symmetric key: it is easy to see how both of them would require a decryption of said  data, otherwhise they would not be able even to understand it, leave alone to use it.
 
-% TODO: approfondire il concetto della homomorphic e citare i paper scaricati
 One possible alternative could be Homomorphic Encryption and, surely, it is a very promising topic, but as for today its computational limitations make it not suitable for a real-world scenario, especially if we consider the amount of data that an AI agent should process.
+
+Another approach to achieve more security in a scenario that involves a LLM could be Trusted Execution Environments, but here lies the need (thus the problem) to ensure that the AI agent is running in a trusted environment, which is not always possible, especially if we consider that the AI agent could be running on a remote server or in a cloud environment.
+
+Hereby we'll expand on the limitations of both Homomorphic Encryption and Trusted Execution Environments, to better understand and define the problem we are trying to solve.
+\subsubsection{Limitations of Homomorphic Encryption}
+As upmentioned, Homomorphic Encryption is a very promising topic, given the ability it enables to perform homomorphic operations on ecnrypted data. The problems arise when we approach statistical computations, which is the basis of Large Language Models, and, in general, of any AI agent.
+
+Precisely on this regard, \citeauthor{cheon2017homomorphic} eloquently stated \cite{cheon2017homomorphic}:
+\begin{quote}
+    Most of real-world data contain some errors from their true values. [...] an approximate value may substitute the original data and a small rounding
+error does not have too much effect on computation result [...] an approximate value may substitute the original data and a small rounding
+error does not have too much effect on computation result [...]
+    Unfortunately this rounding operation has been considered difficult to perform on HE
+since it is not simply represented as a small-degree polynomial.
+\end{quote}
+They proposed a scheme that allows to perform approximate computations on encrypted data, not without open problems, like the need to convert said scheme in a fully homomorphic scheme using bootstrapping. This problem was later addressed by \citeauthor{de2025encryptedllm} who proposed a GPU-based workflow by extending the capabilities of OpenFHE \cite{al2022openfhe}.
+
+Said implementations is undoubtly a great step forward towards practical encrypted LLM, but it has still non trivial limitations:
+\begin{quote}
+    Although promising given the massive overheads involved in both LLMs
+    and FHE, this is still far from practical for real-world usage,
+    even for applications that are not latency sensitive such
+    as text summarization or content generation (in contrast to
+    chatbots or Q/A tasks, which are more demanding in terms
+    of responsiveness).
+\end{quote}
+The main problem is that, even with a GPU-accelerated implementation, the bootstrap overhead (also in combination with the LLM inference overhead) is still too high to be considered practical in a every day scenario.
+To this we have to take in account also that by approximating the functions needed to have LLM inference we are introducing a source of error that translates into a loss of accuracy in the final result.
+Both of this factors alone make Homomorphic Encryption, as per today, not viable to be used in application such as chatbot or coding agents and it is clear why Attribute-Based Encryption could fill the gap in this point and time by providing security precisely where the FHE, at the moment, cannot provide.
+\subsubsection{Limitations of Trusted Execution Environments}
+Trusted Execution Environmets, as the name suggests, are trusted environment where it is possible to execute critical operation and, in the context of prompt injection and LLM, potentially separate a network or an entire device from the execution of malicious actions by the agent that, in fact, would only be relegated in a sandbox.
+
+\citeauthor{geppert2022trusted} define TEEs as following:
+\begin{quote}
+    TEEs [...] are defined as tamper-resistant processing environments that run on a separation kernel.
+    Remote verification makes the technology suitable for cloud
+    environments. It is a mechanism proving to
+    an organization that uses the services of a cloud provider that the
+    specified software runs on the predefined hardware even if the
+    organization does not have direct access to this hardware.
+\end{quote}
+
+In the cloud computing scenario this sort of infrastruction is already offered by providers like Google, Amazon, and Microsoft \cite{geppert2022trusted}, but this would not apply to some organization that don't want to rely on external provider. This is extremely crucial even when talkin of LLMs, since if an organization opted to rely on third party agents (i.e. Claude Code, Codex, etc...) it would rely to this third party also all the security assumtion that arise.
+
+To better explain this concept, by considering the use of a TEE provided by some provider, an organization would not have any control to \textit{how} its own data are manipulated. It is obvious that in most cases this is not an acceptable risk and many would resort to a "home-made" solution, like training its own LLM; this issue could be mitigated if we consider a situation where only pre-approved data can be "sent out", thus the application of Attribute-Based Encryption and the not suitability of TEE.
+
 \subsection{Actors and Goals}
 
 \subsection{Assumptions}
+We assume that the documents subject to protection are already produced and encrypted via Attribute-Baed Encryption before being made available to the system described in this work. Authoring a new document, defining its access policy, ensuring the freshness of employees' attributes, generating the corresponding keys, encrypting the document, are all separate concerns and fall out of the scope of this thesis, which focuses on enforcing, at read time, a mechanism that allows an AI agent to process the document following a safe workflow, minimizing the risk of sensitive data exfiltration.
+
+We also assume that our garantees end at the moment decrypted content is legitimately handed to the requesting AI agent, in accordance with the CP-ABE policy and the combined attributes of the user and the agent.
+What the agent does with that content afterwards is not something an access-control layer operating at application level can controll, and is therefore out of scope. There is an exception worth to mention, that is locally materialized copies which are time-bounded and removed automatically at the end of a session, to limit possible unbounded exposure.
 
 \subsection{Adversary Model}
 
