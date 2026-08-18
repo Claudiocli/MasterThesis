@@ -52,9 +52,19 @@ Trusted Execution Environmets, as the name suggests, are trusted environment whe
 
 In the cloud computing scenario this sort of infrastruction is already offered by providers like Google, Amazon, and Microsoft \cite{geppert2022trusted}, but this would not apply to some organization that don't want to rely on external provider. This is extremely crucial even when talkin of LLMs, since if an organization opted to rely on third party agents (i.e. Claude Code, Codex, etc...) it would rely to this third party also all the security assumtion that arise.
 
-To better explain this concept, by considering the use of a TEE provided by some provider, an organization would not have any control to \textit{how} its own data are manipulated. It is obvious that in most cases this is not an acceptable risk and many would resort to a "home-made" solution, like training its own LLM; this issue could be mitigated if we consider a situation where only pre-approved data can be "sent out", thus the application of Attribute-Based Encryption and the not suitability of TEE.
+To better explain this concept, by considering the use of a TEE provided by some provider, an organization would not have any control on \textit{how} its own data are manipulated. It is obvious that in most cases this is not an acceptable risk and many would resort to a "home-made" solution, like training its own LLM; this issue, although, could be mitigated if we consider a situation where only pre-approved data can be "sent out", thus the application of Attribute-Based Encryption and the not suitability of TEE in every scenario.
 
 \subsection{Actors and Goals}
+In this section we define the actors involved in the system and their goals, to better understand the problem we are trying to solve.
+
+The actors, with their own goals, involved in the system are:
+\begin{itemize}
+    \item \textbf{User:} the user is the person that wants to use an AI agent to process a document. The user has a set of attributes that define their access rights to the document.
+    \item \textbf{AI Agent:} the AI agent is the entity that retrieves and processes the document. The AI agent has a set of attributes that define its access rights to the document.
+    \item \textbf{Document:} the document is the entity that contains sensitive data. The document is encrypted with a CP-ABE scheme and has an access policy that defines who can access it.
+    \item \textbf{Company:} the company is the entity that owns the document and defines the access policy for it alongside the attributes of the users and the AI agents. The company is responsible for ensuring that the access policy is enforced and that the sensitive data is protected.
+\end{itemize}
+% TODO: add the use case UC1 to better explain the actors and goals. (Maybe better in System Design)
 
 \subsection{Assumptions}
 We assume that the documents subject to protection are already produced and encrypted via Attribute-Baed Encryption before being made available to the system described in this work. Authoring a new document, defining its access policy, ensuring the freshness of employees' attributes, generating the corresponding keys, encrypting the document, are all separate concerns and fall out of the scope of this thesis, which focuses on enforcing, at read time, a mechanism that allows an AI agent to process the document following a safe workflow, minimizing the risk of sensitive data exfiltration.
