@@ -1,5 +1,5 @@
 \subsection{File Viewer}
-\subsubsection{File Structure}
+\subsubsection{File Structure} \label{File Structure}
 To start approaching the concept, it is imperative to subdivide the problem into smaller ones. The first problem that came to mind was to find a way to have into a single file multiple parts, each with its own encryption.
 To solve this problem, we did create a JSON structure that could contain each encrypted section of the file, i.e. an array containing a single object per section that has two properties: the policy requested to decipher the ciphertext and the ciphertext itself.
 \begin{lstlisting}[language=JSON, caption={.abe format v1}]

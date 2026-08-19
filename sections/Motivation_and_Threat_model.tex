@@ -3,22 +3,21 @@ The main problem that this thesis aims to solve comes from a consideration while
 Even if this topic could be an argument of discussion by itself, many perplexities arise when we think how data is exchanged considering AI agents actively inside the attack surface.
 
 In particular, the problem is that AI agents are not able to distinguish between sensitive and non-sensitive data, and they are not able to understand the context of the data they are processing. This means that if an AI agent is given access to sensitive data, it could potentially leak that data to an attacker, either intentionally or unintentionally.
-Of course, it is imperative to also consider the intrinsic vulnerability of AI agents to prompt injection attacks, which could be just another mean to the exfiltration of sensitive data as upmentioned.
+Of course, it is imperative to also consider the intrinsic vulnerability of AI agents to prompt injection attacks \cite{debenedetti2025defeating}, which could be just another mean to the exfiltration of sensitive data as aforementioned.
 
-One method to mitigate this problem would be to utilize cryptography, but that alone comes with its own set of challenges. More in detail, both an AI agent and a user cannot benefit from data that is encrypted with a symmetric key: it is easy to see how both of them would require a decryption of said  data, otherwhise they would not be able even to understand it, leave alone to use it.
+One method to mitigate this problem would be to utilize cryptography, but that alone comes with its own set of challenges. More in detail, both an AI agent and a user cannot benefit from data that is encrypted with a symmetric key: it is easy to see how both of them would require a decryption of said  data, otherwise they would not be able even to understand it, let alone use it.
 
-One possible alternative could be Homomorphic Encryption and, surely, it is a very promising topic, but as for today its computational limitations make it not suitable for a real-world scenario, especially if we consider the amount of data that an AI agent should process.
+One possible alternative could be Homomorphic Encryption and, surely, it is a very promising topic, but as of today its computational limitations make it not suitable for a real-world scenario, especially if we consider the amount of data that an AI agent should process.
 
 Another approach to achieve more security in a scenario that involves a LLM could be Trusted Execution Environments, but here lies the need (thus the problem) to ensure that the AI agent is running in a trusted environment, which is not always possible, especially if we consider that the AI agent could be running on a remote server or in a cloud environment.
 
 Hereby we'll expand on the limitations of both Homomorphic Encryption and Trusted Execution Environments, to better understand and define the problem we are trying to solve.
 \subsubsection{Limitations of Homomorphic Encryption}
-As upmentioned, Homomorphic Encryption is a very promising topic, given the ability it enables to perform homomorphic operations on ecnrypted data. The problems arise when we approach statistical computations, which is the basis of Large Language Models, and, in general, of any AI agent.
+As aforementioned, Homomorphic Encryption is a very promising topic, given the ability it enables to perform homomorphic operations on encrypted data. The problems arise when we approach statistical computations, which is the basis of Large Language Models, and, in general, of any AI agent.
 
 Precisely on this regard, \citeauthor{cheon2017homomorphic} eloquently stated \cite{cheon2017homomorphic}:
 \begin{quote}
     Most of real-world data contain some errors from their true values. [...] an approximate value may substitute the original data and a small rounding
-error does not have too much effect on computation result [...] an approximate value may substitute the original data and a small rounding
 error does not have too much effect on computation result [...]
     Unfortunately this rounding operation has been considered difficult to perform on HE
 since it is not simply represented as a small-degree polynomial.
@@ -50,10 +49,11 @@ Trusted Execution Environmets, as the name suggests, are trusted environment whe
     organization does not have direct access to this hardware.
 \end{quote}
 
-In the cloud computing scenario this sort of infrastruction is already offered by providers like Google, Amazon, and Microsoft \cite{geppert2022trusted}, but this would not apply to some organization that don't want to rely on external provider. This is extremely crucial even when talkin of LLMs, since if an organization opted to rely on third party agents (i.e. Claude Code, Codex, etc...) it would rely to this third party also all the security assumtion that arise.
+In the cloud computing scenario this sort of infrastructure is already offered by providers like Google, Amazon, and Microsoft \cite{geppert2022trusted}, but this would not apply to some organization that don't want to rely on external provider. This is extremely crucial even when talking of LLMs, since if an organization opted to rely on third party agents (i.e. Claude Code, Codex, etc...) it would rely to this third party also all the security assumptions that arise.
 
 To better explain this concept, by considering the use of a TEE provided by some provider, an organization would not have any control on \textit{how} its own data are manipulated. It is obvious that in most cases this is not an acceptable risk and many would resort to a "home-made" solution, like training its own LLM; this issue, although, could be mitigated if we consider a situation where only pre-approved data can be "sent out", thus the application of Attribute-Based Encryption and the not suitability of TEE in every scenario.
 
+Summarizing, even though TEEs \textquote[\cite{han2026automated}]{minimizes potential security issues such as data leakage, unauthorized access, code tampering, and software-based attacks}, they do not take in consideration the cases in which a company does want to fine grain the data that escape the company's domain.
 \subsection{Actors and Goals}
 In this section we define the actors involved in the system and their goals, to better understand the problem we are trying to solve.
 
@@ -61,17 +61,38 @@ The actors, with their own goals, involved in the system are:
 \begin{itemize}
     \item \textbf{User:} the user is the person that wants to use an AI agent to process a document. The user has a set of attributes that define their access rights to the document.
     \item \textbf{AI Agent:} the AI agent is the entity that retrieves and processes the document. The AI agent has a set of attributes that define its access rights to the document.
-    \item \textbf{Document:} the document is the entity that contains sensitive data. The document is encrypted with a CP-ABE scheme and has an access policy that defines who can access it.
     \item \textbf{Company:} the company is the entity that owns the document and defines the access policy for it alongside the attributes of the users and the AI agents. The company is responsible for ensuring that the access policy is enforced and that the sensitive data is protected.
+    \item \textbf{IT/Cybersec:} the company's departments responsable for the security of the documents (i.e. encrypting, authorizing and auditing) and the company allthoghether
 \end{itemize}
-% TODO: add the use case UC1 to better explain the actors and goals. (Maybe better in System Design)
 
 \subsection{Assumptions}
-We assume that the documents subject to protection are already produced and encrypted via Attribute-Baed Encryption before being made available to the system described in this work. Authoring a new document, defining its access policy, ensuring the freshness of employees' attributes, generating the corresponding keys, encrypting the document, are all separate concerns and fall out of the scope of this thesis, which focuses on enforcing, at read time, a mechanism that allows an AI agent to process the document following a safe workflow, minimizing the risk of sensitive data exfiltration.
+We assume that the documents subject to protection are already produced and encrypted via Attribute-Based Encryption before being made available to the system described in this work. Authoring a new document, defining its access policy, ensuring the freshness of employees' attributes, generating the corresponding keys, encrypting the document, are all separate concerns and fall out of the scope of this thesis, which focuses on enforcing, at read time, a mechanism that allows an AI agent to process the document following a safe workflow, minimizing the risk of sensitive data exfiltration.
 
 We also assume that our garantees end at the moment decrypted content is legitimately handed to the requesting AI agent, in accordance with the CP-ABE policy and the combined attributes of the user and the agent.
-What the agent does with that content afterwards is not something an access-control layer operating at application level can controll, and is therefore out of scope. There is an exception worth to mention, that is locally materialized copies which are time-bounded and removed automatically at the end of a session, to limit possible unbounded exposure.
+What the agent does with that content afterwards is not something an access-control layer operating at application level can control, and is therefore out of scope. There is an exception worth to mention, that is locally materialized copies which are time-bounded and removed automatically at the end of a session, to limit possible unbounded exposure.
+
+By design, the system assumes that the encrypted documents are \code{.abe} files, that is they follow a predefined structure (as defined in Section \ref{File Structure}) that permits the recognition of encrypted files without the need to decrypt them.
 
 \subsection{Adversary Model}
+In this section we'll describe what entities are considered as adversary.
+By default, we assume the worst case scenario: both AI agent and its Vendor are not trusted, nor the user itself.
+Mainly, we can differentiate three different threat entities:
+\begin{itemize}
+    \item \textbf{AI agent / Vendor:} the agent itself can be "too curious", it can be compromized or worse, its vendor can actively try to use customer data for its own goals (see \ref{Context and Motivations}). It's important to assume the worst case scenario, and to don't trust the model.
+    \item \textbf{User:} both by error and intentionally, a user could try to use its AI agent to read something outside the user's authorization level.
+    \item \textbf{Attacker:} an external entity that could also intercept traffic data and, possibly, forge malicious content.
+\end{itemize}
+It is imperative to understand and prevent possible data leaks, hence our proposal to put at risk only a certain part of confidential data (choosen by the company or who possess them).
 
+It's also important to note that there are goals outside this work's scope such as:
+\begin{itemize}
+    \item \textbf{OS/Endpoint already compromised:} if an attacker has already access to the machine, it is quite easy to see how this system cannot ensure its premises.
+    \item \textbf{Secure storage of CP-ABE master key:} by definition, it is a secret and the company should implement the appropriate measures to store it safely.
+    \item \textbf{Agent behaviour post reception of confidential data:} it is impossible for this system to control what an agent will do to a file once recieved. After the reception of the file, adequatly decrypted, it is responsability of the user what will happen to the data.
+    \item \textbf{DoS attacks:} this system does not guarantee integrity, but the adequate confidenciality of the data.
+\end{itemize}
 \subsection{Security Goals}
+The end goal of this work is to provide a simple way to handle sensitive data with a fine-grained access control enforced by a company, such that its own employee could not provide leaks whenever they use an AI agent, since the access control mentioned above.
+This allow also to audit each and every operations on encrypted files, that is offering an invaluable tool for Cybersec/IT departments, which could easily track any eventual misbehaviour.
+
+Our work certainly benefit corporate environments, but also any enviornment where you want to limit what agents can see and therefore where more controlled access is needed, whit a consequent help on data leak control.

@@ -1,5 +1,36 @@
 \subsection{Attribute-Based Encryption}
+Attribute-Based Encryption, as the name suggest, is a type of encryption that enforce an access control via attributes and authorization policies. The secret key of a user and the ciphertext are both dependent by attributes.
+
+Proposed in 1984, it was improved and implemented in the first years of 2000s; it presents two main types of encription schemes: the \textbf{key-policy attribute-based encryption (KP-ABE)} \cite{goyal2006attribute} and the \textbf{ciphertext-policy attribute-based encryption (CP-ABE)} \cite{bethencourt2007ciphertext}.
+
 \subsubsection{From Identity-Based to Attribute-Based Encryption}
+Identity-Based Encryption is a type of public key cryptography based on PKI (Public-Key Infrastructure), with the main difference being the fact that IBE allows a 1 to 1 relationship between sender and reciever.
+As \citeauthor{shamir1984identity} said in his paper \cite{shamir1984identity}:
+\begin{quote}
+    The scheme is based on a public key cryptosystem with an extra twist: Instead of generating a random pair of public/secret keys and
+publishing one of these keys, the user chooses his name and network address
+as his public key. Any combination of name, social security number, street address, office number or telephone number can be used (depending
+on the context) provided that it uniquely identifies the user
+in a way he cannot later deny, and that it is readily available to the other party.
+\end{quote}
+The signature scheme abide the following verification condition \cite{shamir1984identity}:
+\begin{equation}
+    s^e = i \cdot t^{f(t,m)} \mod{n}
+\end{equation}
+Where 
+\begin{itemize}
+    \item $m$ is the message,
+    \item $s,t$ is the signature,
+    \item $i$ is the user's identity,
+    \item $n$ is the product of large primes,
+    \item $e$ is a large prime reltively prime to $\phi(n)$,
+    \item $f$ is a one way function.
+\end{itemize}
+
+Its application are quite immediate to understand, like the ability to ensure that only a given person could read a message, without relying on the PKI is quite remarcable. There is, anyway, a trust assumtpion towards the Private Key Generator (PKG), which if compromised would nullify the secrecy of every encrypted data that use its issued keys.
+
+The same assumption holds for the Attribute-Based Encryption, but now we have a broader use case: since both ciphertext and keys aren't associated with a single identity it is possible for the encryptor to avoid knowing the specific person who has to read, but, instead, the proprierties that a user has to have.
+
 \subsubsection{Ciphertext-Policy versus Key-Policy ABE}
 \subsubsection{Multi-authority ABE}
 \subsubsection{Functional Encryption as a Generalization}
