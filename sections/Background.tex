@@ -27,11 +27,45 @@ Where
     \item $f$ is a one way function.
 \end{itemize}
 
-Its application are quite immediate to understand, like the ability to ensure that only a given person could read a message, without relying on the PKI is quite remarcable. There is, anyway, a trust assumtpion towards the Private Key Generator (PKG), which if compromised would nullify the secrecy of every encrypted data that use its issued keys.
+IBE applications are quite immediate to understand, for example, the ability to ensure that only a given person could read a message, without relying on the PKI, is quite remarcable. There is, anyway, a trust assumtpion towards the Private Key Generator (PKG), which if compromised would nullify the secrecy of every encrypted data that use its issued keys.
 
-The same assumption holds for the Attribute-Based Encryption, but now we have a broader use case: since both ciphertext and keys aren't associated with a single identity it is possible for the encryptor to avoid knowing the specific person who has to read, but, instead, the proprierties that a user has to have.
+Besides, IBE did point towards ABE; we can see how \citeauthor{sahai2005fuzzy} already introduced an ABE approach while proposing a Fuzzy Identity-Based Encryption. They did note how a system where an authority gave a user different keys for each of the attributes that describe the user could easily fall prey of collusion attacks, where multiple users combine their keys to form identities, with a combination of said attributes, that could decrypt ciphertext which none of the individual user could be able to decrypt alone \cite{sahai2005fuzzy}.
+This occurs by considering an identity as a set of attributes and, precisely for that, FIBE for the first time achieve error tolerance; it allows for a private key for an identity, say $\omega$, to decrypt a ciphertext encrypted with an identity $\omega'$ if and only if $|\omega \cap \omega'| \geq d$, where $d$ is fixed during the setup and indicates the error tolerance threshold.
 
+\citeauthor{goyal2006attribute}, later proposed a better implementation that was further expanded by \citeauthor{bethencourt2007ciphertext}, de facto introducing, respectively, KP-ABE and CP-ABE.
 \subsubsection{Ciphertext-Policy versus Key-Policy ABE}
+The main difference between KP and CP ABE is their approach to the policy needed to decrypt.
+While in the Key-Policy ABE the key holds the policy for the identity, in the Ciphertext-Policy ABE is the ciphertext that holds said policy.
+In other words, for a KP approach, think of a company that encrypt all its mails with the headers as attributes, say\\
+\noindent
+\code{\{reciever: developers, object: project-x, date: 20-dec\}}
+\noindent\\
+When an analist, for a given reason, has to read those mails it will recieve a new key suited for the occasion, for example:\\
+\noindent
+\code{(reciever=developers AND object=project-x) OR (date>20-dec)}
+\noindent\\
+This key and this key alone can decrypt the mails that satisfy the key's rule.
+
+Using CP ABE, instead, shift the policy on the document itself: always in a corporate environment, the company encrypted a reserved memo already knowing who can read it, thus it encrypted the document with a policy like:\\
+\noindent
+\code{(department=finance) OR (management AND security\_level > 5)}
+\noindent\\
+With this setup only those employee who are in the finance department or are in menagement, with a security level greater than 5, can access this document. In summa, the paradigm shift from one-for-all to all-for-one.
+
+Both KP and CP, however, define a collusion resistent structure and, besides an \textbf{Access Structure}, four fundamental algorithm: \textbf{Setup}, \textbf{Encrypt}, \textbf{Key Generation} and \textbf{Decrypt} \cite{goyal2006attribute,bethencourt2007ciphertext}.
+More specifically, those implementations differ on \textbf{Encrypt}, \textbf{Key Generation} and \textbf{Decrypt}, furthermore, CP ABE includes also a \textbf{Delegate} algorithm. It is all defined as:
+\begin{itemize}
+    \item \textbf{Access Structure:} Let ${P_1, P_2, ..., P_n}$ be a set of parties. A collection $A \subseteq 2^{P_1, P_2, ..., P_n}$ is monotone $if\ \forall\ B,C\, :\, if\ B \in A\ and\ B \subseteq C\ then\ C \in A$. An \textbf{Access Structure} (monotone access structure) is a collection (monotone colection) $A$ of non-empty subsets of ${P_1, P_2, ..., P_n}$, i.e. $A \subseteq 2^{P_1, P_2, ..., P_n} \setminus {\emptyset}$. The sets in $A$ are called the authorized sets, and the sets not in $A$ are called the unatuhorized sets.
+    \item \textbf{Setup:} takes no input other than the implicit security parameter. It outputs the public parameters $PK$ and a master key $MK$.
+    \item \textbf{KP Encrypt:} a randomized algorithm that takes as input a message $m$, a set of attributes $\gamma$, and the public parameters $PK$. It outputs the ciphertext $E$.
+    \item \textbf{KP Key Generation:} a randomized algorithm that takes as input an \textbf{Access Structure} $A$, the master key $MK$ and the public parameters $PK$. It outputs the decryption key $D$.
+    \item \textbf{KP Decryption:} takes as input the ciphertext $E$, encrypted under the set $\gamma$ of attributes, the decryption key $D$ for access structure $A$ and the public parameters $PK$. It outputs the message $M\ if\ \gamma \in A$.
+    \item \textbf{CP Encrypt:} takes as input the public parameters $PK$, a message $M$, and an access structure $A$ over the universe of the attributes. The algorithm encrypt $M$ and produce a ciphertext $CT$ such that only a user that posseses a set of attributes that satisfies the access structure will be able to decrypt the message. It is assumed that the ciphertext implicitly contains $A$.
+    \item \textbf{CP Key Generation:} takes as input the master key $MK$ and a set of attributes $S$ that describe the key. It outputs a private key $SK$.
+    \item \textbf{CP Decryption:} takes as input the public parameters $PK$, a ciphertext $CT$, which contains an access policy $A$, and a private key $SK$, which is a private key for a set $S$ of attributes. If $S$ satisfies $A$ then the algorithm will decript $CT$ and return the message $M$.
+    \item \textbf{CP Delegate:} takes as input a secret key $SK$ for some set of attributes $S$ and a set $\tilde{S} \subset S$. It outputs a secret key $SK$ for the set of attributes $\tilde{S}$. 
+\end{itemize}
+
 \subsubsection{Multi-authority ABE}
 \subsubsection{Functional Encryption as a Generalization}
 
