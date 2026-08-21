@@ -4,16 +4,87 @@ Our system is composed by two main component:
     \item \textbf{server-side components:} the components include Identity and Access Management (\textbf{Keycloak}), database (\textbf{Postgres}), logic handler (\textbf{OpenABE}), MCP server.
     \item \textbf{client-side connectors:} adapter and hook grant connection and control over the AI agent.
 \end{itemize}
+The server-side components are designed to be each one indipendent from the others; we have containerized each one of them with \code{containerd} and made them available with Rancher Desktop.
 
+Client-side there are two pattern essential to the correct flow of the program: there is an adapter for each agent and a hook that is the real intermediary between the server-side and the agent.
 \subsection{Early Prototyping: File Viewer and .abe format}
 
-\subsubsection{CP-ABE Authority and Key Management}
+\subsubsection{File Structure} \label{File Structure}
+To start approaching the concept, it is imperative to subdivide the problem into smaller ones. The first problem that came to mind was to find a way to have into a single file multiple parts, each with its own encryption.
+To solve this problem, we did create a JSON structure that could contain each encrypted section of the file, i.e. an array containing a single object per section that has two properties: the policy requested to decipher the ciphertext and the ciphertext itself.
+\begin{lstlisting}[language=JSON, caption={.abe format v1}]
+{
+  "format": "abe-doc",
+  "version": 1,
+  "sections": [
+    {
+      "policy": "livello = x",
+      "chiphertext": CIPHERTEXT_Lx
+    },
+    {
+      "policy": "livello = y",
+      "chiphertext": CIPHERTEXT_Ly
+    },
+    {
+      "policy": "livello = z",
+      "chiphertext": CIPHERTEXT_Lz
+    }
+  ]
+}
+\end{lstlisting}
+It's quite easy to point out that this implementation is very inefficient when the number of sections grows. To optimize the amount of operations needed and the structure of the document itself, it was improved in the version 2 of the structure:
+\begin{lstlisting}[language=JSON, caption={.abe v2}]
+{
+  "format": "abe-doc",
+  "version": 1,
+  "sections": [
+    {
+      "group": 0
+    },
+    {
+      "group": 1
+    },
+    {
+      "group": 2
+    },
+    {
+      "group": 1
+    },
+    {
+      "group": 0
+    }
+  ],
+  "groups": [
+    {
+      "policy": "livello >= 3",
+      "ciphertext": CIPHERTEXT_L3
+    },
+    {
+      "policy": "livello >= 2",
+      "ciphertext": CIPHERTEXT_L2
+    },
+    {
+      "policy": "livello >= 1",
+      "ciphertext": CIPHERTEXT_L1
+    }
+  ]
+}
+\end{lstlisting}
+This structure provides one key feature: the ability to call the decrypt function $n$ times, where $n$ is the number of unique attributes used to rules the sections. This is a more sustainable approach than v1, since, in that case, the decrypt function would be called exactly $m$ times, where $m$ is the amount of each section in the document. It's a fair assumption to say that $m$, \textit{usually}, is greater than $n$.
+\subsubsection{File Viewer}
+Having a structured document by itself was not sufficient for our testing and, having the need to read and edit a \code{.abe} file, it was necessary to create such application. The file viewer operates as a simple file editor, with the ability to encrypt and decrypt a file using a user's private key (N.B. this feature would negate entirely the Keycloak IAM workflow and was created only for test).
+% TODO: POSSIBLE EDIT NEEDED (Keycloak > stored key)
+This private key, as seen before, 
+% Reference a previous explaination of the ABE
+has to be created and stored beforehand. A user could also authenticate itself via \textbf{Keycloak} login and so a token with its attribute will be elaborated and used in substitution of the user's key.
 
-\subsubsection{Human Identity via Keycloak}
+\subsection{CP-ABE Authority and Key Management}
 
-\subsubsection{Agent Identity Model}
+\subsection{Human Identity via Keycloak}
 
-\subsubsection{Audit Logging}
+\subsection{Agent Identity Model}
+
+\subsection{Audit Logging}
 
 \subsection{Core and Strategy Pattern}
 
