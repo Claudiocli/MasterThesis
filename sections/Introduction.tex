@@ -28,8 +28,8 @@ The AI agents used for testing are:
     \item \textbf{Codex}, an AI agent developed by OpenAI;
     \item \textbf{Copilot for VSCode}, an AI agent developed by Microsoft, integrated into the Visual Studio Code IDE.
 \end{itemize}
-
-The server-side component of the system is implemented in Python and it was containerized using \textbf{Rancher Desktop}, a tool that allows to run Kubernetes clusters on a local machine. This setup enables easy deployment and management of the server component, ensuring scalability and reliability in handling decryption requests from AI agents.
+Throughout the project we used Python as main language, as well as Python libreries such as \textbf{PyJWT}, \textbf{FastMCP} and \textbf{Psycopg}.
+The server-side component of the system was containerized using \textbf{Rancher Desktop}, a tool that allows to run Kubernetes clusters on a local machine. This setup enables easy deployment and management of the server component, ensuring scalability and reliability in handling decryption requests from AI agents.
 Alongside the server container, there were deployed two other containers: one for the Keycloak server and another for a \textbf{PostgreSQL} database, which is used by Keycloak to store user and role information. This containerized approach simplifies the deployment process and allows for easy scaling of the system as needed.
 
 \subsection{Thesis outline}
