@@ -81,13 +81,24 @@ The user-intended workflow is to login with \textbf{Keycloak} and only then he'd
 
 There is an implicit security system, that is any user with the "security level" (an attribute defined to test a hierarchy) less than the maximum security level used in the file cannot overwrite the file.
 \subsection{CP-ABE Authority and Key Management}
+It is clear that we have to have a central autorithy that could audit and grant accesses to documents. This operation is made by conjuncting both \textbf{Keycloak} and \textbf{Postgres}:
+While \textbf{Keycloak} holds every user's informations (e.g. mail, department, security level, etc...), and so its attributes, \textbf{Postgres} holds both the users' cached keys, once they recieved them from Keycloak, and a list of allowed agents with each own key.
 
+% TODO: Explain better this part
+The concept is simple: first a user get its token from Keycloak, then a cached and hashed key is kept in memory in a trusted sql database, and then, if in said database is found a key corresponding to the user's agent, the request is accepted by the server who will run the \textbf{OpenABE} operations to serve the decrypted file.
+With this solution nobody needs to have installed its own key and it is strictly handled "in background", to both minimizing the risk of tampering and also to ensure a strict control over the allowed agents (it's easy as deleting a row in a db to disable entirely an agent from being used).
 
 \subsection{Human Identity via Keycloak}
+Obviously, the Keycloak login can and has to be used with two-factor-authentication (it can be enforced also a biometric login). The 2fa itself is out of this scope, but we mention \textbf{FreeOTP} as a free tool for an otp testing.
+
+Once the user is logged in, and we can assume it is authenticated, then we can proceed to concede a token, containing the relevant attributes, that will be used to ask for the key of said user.
 
 \subsection{Agent Identity Model}
 
 \subsection{Audit Logging}
+Each and every operation the agent make while calling the server is logged, both to log every access to each document and to ensure their confidentiality.
+Server-side it is all kept in a \code{audit.jsonl}, for semplicity's sake, but it can be enhanced.
+
 
 \subsection{Core and Strategy Pattern}
 
@@ -96,6 +107,9 @@ There is an implicit security system, that is any user with the "security level"
 \subsubsection{Per-Agent Adapters}
 
 \subsection{Document Lifecycle}
+The document starts it life whenever created and encrypted by somenoe, say a manager, that has to include sensible information in said document.
+Once the appropriate policy is defined and used to encrypt the document, it is stored and it become available through requst at the MCP server.
+
 
 \subsection{Deployment Architecture}
 
