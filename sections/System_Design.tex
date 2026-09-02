@@ -156,13 +156,16 @@ def render(decision: Decision) -> RenderedResponse:
     return RenderedResponse(stdout=json.dumps(output))
 \end{lstlisting}
 \subsection{Document Lifecycle}
-\begin{figure}
+The document starts its life whenever it is created and encrypted by somenoe, say a manager, that has to include sensible information in said document.
+Once the appropriate policy is defined and used to encrypt the document, it is stored and it become available through requst at the MCP server.
+
+\begin{figure}[h]
   \centering
   \includegraphics[width=\textwidth]{media/diagrams/Document Lifecycle.drawio.png}
   \caption{The flow diagram of the document lifecycle}
 \end{figure}
-The document starts its life whenever it is created and encrypted by somenoe, say a manager, that has to include sensible information in said document.
-Once the appropriate policy is defined and used to encrypt the document, it is stored and it become available through requst at the MCP server.
+
+When an agent requests access to a document, the hook will intercept the request and will start the authentication, first of the user and then of the agent. Everything is used to evaluate the CP-ABE policy and, if the user and the agent are both allowed to access the document, then the decryption will be performed and the document will be sent back to the agent; if not, the request will be denied and the agent will not have access to the document.
 
 
 \subsection{Deployment Architecture}
