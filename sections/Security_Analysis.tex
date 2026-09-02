@@ -1,0 +1,41 @@
+\subsection{Security Properties}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}[c]{|m{0.3\textwidth}|m{0.3\textwidth}|m{0.3\textwidth}|}
+        \hline
+        \textit{\textbf{Threat}} & \textit{\textbf{Attack Goal}}       & \textit{\textbf{Pabel Mitigation}}   \\ \hline
+        Unauthorized user        & Read protected data                 & Human authentication + ABE           \\ \hline
+        Unauthorized agent       & Read protected data                 & Agent identity + ABE                 \\ \hline
+        User / Agent mismatch    & Bypass policy                       & Combined attributes                  \\ \hline
+        Agent Impersonation      & Fake agent identity                 & Installation credentials             \\ \hline
+        Prompt injection         & Trick agent into requesting secrets & Interception + authorization         \\ \hline
+        Network attacker         & Steal / forge traffic               & Token verification + TLS {[}+ VPN{]} \\ \hline
+        Compromised endpoint     & Read plaintext                      & Out of scope                         \\ \hline
+        Master Key compromise    & Decrypt everything                  & Operational key protection           \\ \hline
+        Post-decryption leakage  & Exfiltrate plaintext                & Out of scope / limitation            \\ \hline
+    \end{tabular}
+    \caption{Summary of various possible threat scenarios}
+\end{table}
+
+\subsection{Unauthorized User}
+
+\subsection{Unauthorized Agent}
+
+\subsection{User-Agent Collusion}
+
+\subsection{Prompt Injection}
+
+\subsection{Agent Impersonation}
+
+\subsection{Credential Theft}
+
+\subsection{Network Attacker}
+
+\subsection{Compromised Endpoint}
+
+\subsection{Master Key Compromise}
+
+\subsection{Post-Decryption Leakage}
+
+\subsection{Limitations}

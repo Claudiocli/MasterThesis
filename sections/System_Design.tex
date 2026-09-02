@@ -105,9 +105,63 @@ Server-side it is all kept in a \code{audit.jsonl}, for semplicity's sake, but i
 \subsubsection{The Relay Hook}
 
 \subsubsection{Per-Agent Adapters}
+Since each agent has its own way to be controlled, it is necessary to create a specific adapter for each one of them. The adapter is the component that will translate the generic workflow into agent-specific ones.
+The general approach is to fold the content of the decision into the agent's reasoning process, so that if the decision is \code{None}, or better, if there is a deny from the \code{core.decide} function, then the agent will not be able to access the document and so it will not be able to use it in its reasoning process.
+This is important because each and every agent has its own way to reason and use hooks, for example, Claude code uses \code{decision.updated\_input}, thanks to which we can impose the use of our tool; different story is for Copilot CLI we cannot fully rely to \code{additionalContext}.
 
+Following we can see fragments of those two implementations for Claude code and Copilot CLI, respectively:
+\begin{lstlisting}[language=Python, caption={Claude code adapter}]
+def render(decision: Decision) -> RenderedResponse:
+    if decision.kind == DecisionKind.ALLOW:
+        if decision.updated_input is None:
+            return RenderedResponse()  # no output at all - the tool call proceeds untouched
+        # A direct call to pabel's own tools, allowed through with this
+        # installation's agent credential injected - see core/decide.py.
+        return RenderedResponse(stdout=json.dumps({
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "allow",
+                "updatedInput": decision.updated_input,
+            }
+        }))
+
+    output = {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": decision.reason,
+        }
+    }
+    if decision.content is not None:
+        output["hookSpecificOutput"]["additionalContext"] = json.dumps(decision.content)
+    return RenderedResponse(stdout=json.dumps(output))
+\end{lstlisting}
+\begin{lstlisting}[language=Python, caption={Copilot CLI adapter}]
+def render(decision: Decision) -> RenderedResponse:
+    if decision.kind == DecisionKind.ALLOW:
+        return RenderedResponse()
+
+    # The guaranteed channel: fold the relay result into the reason text
+    # itself, since additionalContext delivery is unreliable here.
+    reason = fold_content_into_reason(decision)
+    output = {
+        "hookSpecificOutput": {
+            "hookEventName": "preToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        }
+    }
+    if decision.content is not None:
+        output["hookSpecificOutput"]["additionalContext"] = json.dumps(decision.content)
+    return RenderedResponse(stdout=json.dumps(output))
+\end{lstlisting}
 \subsection{Document Lifecycle}
-The document starts it life whenever created and encrypted by somenoe, say a manager, that has to include sensible information in said document.
+\begin{figure}
+  \centering
+  \includegraphics[width=\textwidth]{media/diagrams/Document Lifecycle.drawio.png}
+  \caption{The flow diagram of the document lifecycle}
+\end{figure}
+The document starts its life whenever it is created and encrypted by somenoe, say a manager, that has to include sensible information in said document.
 Once the appropriate policy is defined and used to encrypt the document, it is stored and it become available through requst at the MCP server.
 
 
