@@ -11,9 +11,15 @@ A second, more institutional, example involves OpenAI: in december 2024, the Ita
 
 Also Anthropic was acting in regard of the guarantees that have to be assumed by a vendor, in particular it had to update its customer terms\cite{anthropic2025terms}. They explicitly stated that each conversation made with Claude could be used for model training, with the exception of Claude for Work, Claude Enterprise, Claude Gov and any API-based access\cite{anthropic2025terms}.
 
+These three exapmles share a common thread, that is once data leaves an organization's boundary and reaches a third-party model or vendor, the organization has no further technical control over it. This thesis takes the position that this control should not depend on trusting the AI agent's behavior, nor on trusting the vendor's policies, but should instead enforced cryptographically, when accessing the data.
 \subsection{Activities done and Results}
 In this thesis, we have designed and implemented a plugin for AI agents that allows to decrypt files using Attribute-Based Encryption (ABE) in order to ensure that only authorized users and authorized AI Agents can access specific parts of the file. The plugin is designed to be easily integrated into existing AI agents, providing a seamless way to enhance security and privacy in AI-driven environments.
-Such security enhancement is achieved by encrypting files with ABE, which allows for fine-grained access control based on user and AI agent attributes. The plugin intercepts file access requests from the AI agent, authenticates the user and checks, via server, if both the user's attributes and the agent's attributes match the encryption policy; thus the server decrypts the specific parts of the file that both the user and \emph{that} agent are authorized to see and returns it to the agent. This approach ensures that sensitive information remains protected when accessed by AI agents.
+
+Such security enhancement is achieved by encrypting files with ABE, which allows for fine-grained access control based on user and AI agent attributes. PABEL intercepts file access requests from the AI agent, authenticates the user and checks, via server, if both the user's attributes and the agent's attributes match the encryption policy; thus the server decrypts the specific parts of the file that both the user and \emph{that} agent are authorized to see and returns it to the agent.
+
+This approach ensures that sensitive information remains protected when accessed by AI agents, since every sensible information is handled server-side and the agent does not perform any sort of decryption and does not even hold any cryptographic material needed to do so.
+
+The result is a working end-to-end system: a CP-ABE capable MCP server, an agnostic connector that has been verified against multiple agents and a hardened workflow to ensure agents' identites.
 \subsection{Technologies and Tools}
 To achieve the goals of this thesis, several technologies and tools have been utilized.
 The core of the security mechanism is based on Attribute-Based Encryption (ABE), more in particular we have used the open source library \textbf{OpenABE}\cite{openabe}, which we had to upgrade to a more recent version by updating its dependecies and fixing some bugs that were present in the original code.
@@ -27,6 +33,7 @@ The AI agents used for testing are:
     \item \textbf{Claude Code}, an AI agent developed by Anthropic; 
     \item \textbf{Codex}, an AI agent developed by OpenAI;
     \item \textbf{Copilot for VSCode}, an AI agent developed by Microsoft, integrated into the Visual Studio Code IDE.
+    \item \textbf{OpenCode}, an open-source AI agent.
 \end{itemize}
 Throughout the project we used Python as main language, as well as Python libreries such as \textbf{PyJWT}, \textbf{FastMCP} and \textbf{Psycopg}.
 The server-side component of the system was containerized using \textbf{Rancher Desktop}, a tool that allows to run Kubernetes clusters on a local machine. This setup enables easy deployment and management of the server component, ensuring scalability and reliability in handling decryption requests from AI agents.
