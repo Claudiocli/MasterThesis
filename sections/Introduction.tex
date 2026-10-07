@@ -5,7 +5,7 @@ More in detail the concept that we were trying to focus on, was the scenario in 
 
 This particular fear, to not trust AI vendors, it's not unfounded; several recent incidents show how sensible data can end up outside the boundaries an organization intended to enforce, or how AI providers themselves may proceed to process user data in ways that raise legitimate concerns.
 
-A first well known example is the 2023 Samsung incident, where some employees pasted proprietary source code into a public LLM chatbot for debugging purposes, effectively transmitting confidential IP (intellectual property) to an external, unintended infrastructure. This incident led Samsung to ban all AI tools altogether\cite{samsung2023leak}
+A well known example is the 2023 Samsung incident, where some employees pasted proprietary source code into a public LLM chatbot for debugging purposes, effectively transmitting confidential IP (intellectual property) to an external, unintended infrastructure. This incident led Samsung to ban all AI tools altogether\cite{samsung2023leak}
 
 A second, more institutional, example involves OpenAI: in december 2024, the Italian Data Protection Authority fined OpenAI for \texteuro15 million, finding that ChatGPT was processing users' personal data to train underlying models without the legal basis required by the GDPR; not to mention a security breach, that took place in march 2023, which exposed users' data and payment information\cite{garante2024openai}.
 
@@ -17,7 +17,7 @@ In this thesis, we have designed and implemented a plugin for AI agents that all
 
 Such security enhancement is achieved by encrypting files with ABE, which allows for fine-grained access control based on user and AI agent attributes. PABEL intercepts file access requests from the AI agent, authenticates the user and checks, via server, if both the user's attributes and the agent's attributes match the encryption policy; thus the server decrypts the specific parts of the file that both the user and \emph{that} agent are authorized to see and returns it to the agent.
 
-This approach ensures that sensitive information remains protected when accessed by AI agents, since every sensible information is handled server-side and the agent does not perform any sort of decryption and does not even hold any cryptographic material needed to do so.
+This approach ensures that sensitive information remains protected when accessed by AI agents, since every sensitive information is handled server-side and the agent does not perform any sort of decryption and does not even hold any cryptographic material needed to do so.
 
 The result is a working end-to-end system: a CP-ABE capable MCP server, an agnostic connector that has been verified against multiple agents and a hardened workflow to ensure agents' identites.
 \subsection{Technologies and Tools}
@@ -26,7 +26,7 @@ The core of the security mechanism is based on Attribute-Based Encryption (ABE),
 
 Another important component of the system is the authentication and authorization mechanism, which is implemented using \textbf{Keycloak}, an open-source identity and access management solution. Keycloak provides a robust framework for managing user identities, roles, and permissions, which is essential for enforcing access control policies in the context of ABE.
 
-The plugin is designed to be compatible with AI agents that support plugin integration, and it has been tested with specific AI agents to ensure proper functionality.
+The plugin is designed to be compatible with AI agents that support plugin integration, and it has been tested with specific AI agents and harnesses to ensure proper functionality.
 The AI agents used for testing are:
 % TODO: add more AI agents if needed
 \begin{itemize}
@@ -41,4 +41,4 @@ Alongside the server container, there were deployed two other containers: one fo
 
 \subsection{Thesis outline}
 % TODO: ROADMAP
-After a description of the motivation and also a security overlay of this work in section \ref{Motivation and Threat Model}, we'll cover some background informations in section \ref{Background} before heading in a in-depth analysis of the System Design in section \ref{System Design}.
+After a description of the motivation and also a security overlay of this work in section \ref{Motivation and Threat Model}, we'll cover some background informations in section \ref{Background}, especially \nameref{ABE}, before heading in a in-depth analysis of the System Design in section \ref{System Design}.

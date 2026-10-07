@@ -3,10 +3,10 @@
 The main problem that this thesis aims to solve comes from a consideration while thinking how AI can be implemented in a blue team scenario.
 Even if this topic could be an argument of discussion by itself, many perplexities arise when we think how data is exchanged considering AI agents actively inside the attack surface.
 
-In particular, the problem is that AI agents are not able to distinguish between sensitive and non-sensitive data, and they are not able to understand the context of the data they are processing. This means that if an AI agent is given access to sensitive data, it could potentially leak that data to an attacker, either intentionally or unintentionally.
+In particular, the problem is that AI agents are not able to distinguish between sensitive and non-sensitive data and, furthermore, they are not able to understand the context of the data they are processing. This means that if an AI agent is given access to sensitive data, it could potentially leak that data to an attacker, either intentionally or unintentionally.
 Of course, it is imperative to also consider the intrinsic vulnerability of AI agents to prompt injection attacks \cite{debenedetti2025defeating}, which could be just another mean to the exfiltration of sensitive data as aforementioned.
 
-One method to mitigate this problem would be to utilize cryptography, but that alone comes with its own set of challenges. More in detail, both an AI agent and a user cannot benefit from data that is encrypted with a symmetric key: it is easy to see how both of them would require a decryption of said  data, otherwise they would not be able even to understand it, let alone use it.
+One method to mitigate this problem would be to utilize cryptography, but that alone comes with its own set of challenges. More in detail, both an AI agent and a user cannot benefit from data that is encrypted with a symmetric key: both of them would require a decryption of said  data, otherwise they would not be able even to understand it, let alone use it.
 
 One possible alternative could be Homomorphic Encryption and, surely, it is a very promising topic, but as of today its computational limitations make it not suitable for a real-world scenario, especially if we consider the amount of data that an AI agent should process.
 
@@ -62,7 +62,7 @@ The actors, with their own goals, involved in the system are:
 \begin{itemize}
     \item \textbf{User:} the user is the person that wants to use an AI agent to process a document. The user has a set of attributes that define their access rights to the document.
     \item \textbf{AI Agent:} the AI agent is the entity that retrieves and processes the document. The AI agent has a set of attributes that define its access rights to the document.
-    \item \textbf{Company:} the company is the entity that owns the document and defines the access policy for it alongside the attributes of the users and the AI agents. The company is responsible for ensuring that the access policy is enforced and that the sensitive data is protected.
+    \item \textbf{Company:} the company is the entity that owns the document and defines the access policy for it, alongside the attributes of the users and the AI agents. The company is responsible for ensuring that the access policy is enforced and that the sensitive data is protected.
     \item \textbf{IT/Cybersec:} the company's departments responsable for the security of the documents (i.e. encrypting, authorizing and auditing) and the company allthoghether
 \end{itemize}
 
@@ -70,7 +70,7 @@ The actors, with their own goals, involved in the system are:
 We assume that the documents subject to protection are already produced and encrypted via Attribute-Based Encryption before being made available to the system described in this work. Authoring a new document, defining its access policy, ensuring the freshness of employees' attributes, generating the corresponding keys, encrypting the document, are all separate concerns and fall out of the scope of this thesis, which focuses on enforcing, at read time, a mechanism that allows an AI agent to process the document following a safe workflow, minimizing the risk of sensitive data exfiltration.
 
 We also assume that our garantees end at the moment decrypted content is legitimately handed to the requesting AI agent, in accordance with the CP-ABE policy and the combined attributes of the user and the agent.
-What the agent does with that content afterwards is not something an access-control layer operating at application level can control, and is therefore out of scope. There is an exception worth to mention, that is locally materialized copies which are time-bounded and removed automatically at the end of a session, to limit possible unbounded exposure.
+What the agent does with that content afterwards is not something an access-control layer, operating at application level, can control and it is, therefore, out of scope. There is an exception worth to mention, that is locally materialized copies which are time-bounded and removed automatically at the end of a session, to limit possible unbounded exposure.
 
 By design, the system assumes that the encrypted documents are \code{.abe} files, that is they follow a predefined structure (as defined in Section \ref{File Structure}) that permits the recognition of encrypted files without the need to decrypt them.
 
@@ -88,12 +88,12 @@ It is imperative to understand and prevent possible data leaks, hence our propos
 It's also important to note that there are goals outside this work's scope such as:
 \begin{itemize}
     \item \textbf{OS/Endpoint already compromised:} if an attacker has already access to the machine, it is quite easy to see how this system cannot ensure its premises.
-    \item \textbf{Secure storage of CP-ABE master key:} by definition, it is a secret and the company should implement the appropriate measures to store it safely.
+    \item \textbf{Secure storage of CP-ABE master key:} the CP-ABE master key is assumed to be protected by the company through appropriate measures to store it safely; its compromise would void every guarantee of the system.
     \item \textbf{Agent behaviour post reception of confidential data:} it is impossible for this system to control what an agent will do to a file once recieved. After the reception of the file, adequatly decrypted, it is responsability of the user what will happen to the data.
-    \item \textbf{DoS attacks:} this system does not guarantee integrity, but the adequate confidenciality of the data.
+    \item \textbf{DoS attacks:} this system does not guarantee the availability, but the adequate confidenciality of data.
 \end{itemize}
 \subsection{Security Goals}
 The end goal of this work is to provide a simple way to handle sensitive data with a fine-grained access control enforced by a company, such that its own employee could not provide leaks whenever they use an AI agent, since the access control mentioned above.
 This allow also to audit each and every operations on encrypted files, that is offering an invaluable tool for Cybersec/IT departments, which could easily track any eventual misbehaviour.
 
-Our work certainly benefit corporate environments, but also any enviornment where you want to limit what agents can see and therefore where more controlled access is needed, whit a consequent help on data leak control.
+Our work certainly benefit corporate environments, but also any enviornment where it is wanted to limit what agents can see and therefore where more controlled access is needed, whit a consequent help on data leak control.

@@ -1,7 +1,7 @@
-\subsection{Attribute-Based Encryption}
+\subsection{Attribute-Based Encryption}\label{ABE}
 Attribute-Based Encryption, as the name suggest, is a type of encryption that enforce an access control via attributes and authorization policies. The secret key of a user and the ciphertext are both dependent by attributes.
 
-Proposed in 1984, it was improved and implemented in the first years of 2000s; it presents two main types of encription schemes: the \textbf{key-policy attribute-based encryption (KP-ABE)} \cite{goyal2006attribute} and the \textbf{ciphertext-policy attribute-based encryption (CP-ABE)} \cite{bethencourt2007ciphertext}.
+First proposed as a concept in 1984, it was improved and implemented in the first years of 2000s; it presents two main types of encription schemes: the \textbf{key-policy attribute-based encryption (KP-ABE)} \cite{goyal2006attribute} and the \textbf{ciphertext-policy attribute-based encryption (CP-ABE)} \cite{bethencourt2007ciphertext}.
 
 \subsubsection{From Identity-Based to Attribute-Based Encryption}
 Identity-Based Encryption is a type of public key cryptography based on PKI (Public-Key Infrastructure), with the main difference being the fact that IBE allows a 1 to 1 relationship between sender and reciever.
@@ -30,7 +30,7 @@ Where
 IBE applications are quite immediate to understand, for example, the ability to ensure that only a given person could read a message, without relying on the PKI, is quite remarcable. There is, anyway, a trust assumtpion towards the Private Key Generator (PKG), which if compromised would nullify the secrecy of every encrypted data that use its issued keys.
 
 Besides, IBE did point towards ABE; we can see how \citeauthor{sahai2005fuzzy} already introduced an ABE approach while proposing a Fuzzy Identity-Based Encryption. They did note how a system where an authority gave a user different keys for each of the attributes that describe the user could easily fall prey of collusion attacks, where multiple users combine their keys to form identities, with a combination of said attributes, that could decrypt ciphertext which none of the individual user could be able to decrypt alone \cite{sahai2005fuzzy}.
-This occurs by considering an identity as a set of attributes and, precisely for that, FIBE for the first time achieve error tolerance; it allows for a private key for an identity, say $\omega$, to decrypt a ciphertext encrypted with an identity $\omega'$ if and only if $|\omega \cap \omega'| \geq d$, where $d$ is fixed during the setup and indicates the error tolerance threshold.
+This occurs by considering an identity as a set of attributes and, precisely for that, FIBE for the first time achieved error tolerance; it allows for a private key for an identity, say $\omega$, to decrypt a ciphertext encrypted with an identity $\omega'$ if and only if $|\omega \cap \omega'| \geq d$, where $d$ is fixed during the setup and indicates the error tolerance threshold.
 
 \citeauthor{goyal2006attribute}, later proposed a better implementation that was further expanded by \citeauthor{bethencourt2007ciphertext}, de facto introducing, respectively, KP-ABE and CP-ABE.
 \subsubsection{Ciphertext-Policy versus Key-Policy ABE}
@@ -46,33 +46,76 @@ When an analist, for a given reason, has to read those mails it will recieve a n
 \noindent\\
 This key and this key alone can decrypt the mails that satisfy the key's rule.
 
-Using CP ABE, instead, shift the policy on the document itself: always in a corporate environment, the company encrypted a reserved memo already knowing who can read it, thus it encrypted the document with a policy like:\\
+Using CP ABE, instead, shift the policy on the document itself: for example, always in a corporate environment, the company encrypted a reserved memo already knowing who can read it, thus it encrypted the document with a policy like:\\
 \noindent
 \code{(department=finance) OR (management AND security\_level > 5)}
 \noindent\\
-With this setup only those employees who are in the finance department or are in menagement, with a security level greater than 5, can access this document. In summa, the paradigm shift from one-for-all to all-for-one.
+With this setup only those employees who are in the finance department or are in management, with a security level greater than 5, can access this document. In summa, the paradigm shift from the rule attached to the reader (KP-ABE) to the rule attached to the document (CP-ABE).
 
-Both KP and CP, however, define a collusion resistent structure and, besides an \textbf{Access Structure}, four fundamental algorithm: \textbf{Setup}, \textbf{Encrypt}, \textbf{Key Generation} and \textbf{Decrypt} \cite{goyal2006attribute,bethencourt2007ciphertext}.
-More specifically, those implementations differ on \textbf{Encrypt}, \textbf{Key Generation} and \textbf{Decrypt}, furthermore, CP ABE includes also a \textbf{Delegate} algorithm. It is all defined as:
+Both KP and CP, however, share the definition of a collusion resistant structure, an \textbf{Access Structure}, and four fundamental algorithms: \textbf{Setup}, \textbf{Encrypt}, \textbf{Key Generation} and \textbf{Decrypt} \cite{goyal2006attribute,bethencourt2007ciphertext}.
+Moreover, those implementations differ on \textbf{Encrypt}, \textbf{Key Generation} and \textbf{Decrypt}, furthermore, CP ABE includes also a \textbf{Delegate} algorithm. It is all defined as:
 \begin{itemize}
-    \item \textbf{Access Structure:} Let ${P_1, P_2, ..., P_n}$ be a set of parties. A collection $A \subseteq 2^{P_1, P_2, ..., P_n}$ is monotone $if\ \forall\ B,C\, :\, if\ B \in A\ and\ B \subseteq C\ then\ C \in A$. An \textbf{Access Structure} (monotone access structure) is a collection (monotone colection) $A$ of non-empty subsets of ${P_1, P_2, ..., P_n}$, i.e. $A \subseteq 2^{P_1, P_2, ..., P_n} \setminus {\emptyset}$. The sets in $A$ are called the authorized sets, and the sets not in $A$ are called the unatuhorized sets.
+    \item \textbf{Access Structure:} Let ${P_1, P_2, ..., P_n}$ be a set of parties. A collection $A \subseteq 2^{P_1, P_2, ..., P_n}$ is monotone $if\ \forall\ B,C\, :\, if\ B \in A\ and\ B \subseteq C\ then\ C \in A$. An \textbf{Access Structure} (monotone access structure) is a collection (monotone collection) $A$ of non-empty subsets of ${P_1, P_2, ..., P_n}$, i.e. $A \subseteq 2^{P_1, P_2, ..., P_n} \setminus {\emptyset}$. The sets in $A$ are called the authorized sets, and the sets not in $A$ are called the unauthorized sets.
     \item \textbf{Setup:} takes no input other than the implicit security parameter. It outputs the public parameters $PK$ and a master key $MK$.
     \item \textbf{KP Encrypt:} a randomized algorithm that takes as input a message $m$, a set of attributes $\gamma$, and the public parameters $PK$. It outputs the ciphertext $E$.
     \item \textbf{KP Key Generation:} a randomized algorithm that takes as input an \textbf{Access Structure} $A$, the master key $MK$ and the public parameters $PK$. It outputs the decryption key $D$.
     \item \textbf{KP Decryption:} takes as input the ciphertext $E$, encrypted under the set $\gamma$ of attributes, the decryption key $D$ for access structure $A$ and the public parameters $PK$. It outputs the message $M\ if\ \gamma \in A$.
-    \item \textbf{CP Encrypt:} takes as input the public parameters $PK$, a message $M$, and an access structure $A$ over the universe of the attributes. The algorithm encrypt $M$ and produce a ciphertext $CT$ such that only a user that posseses a set of attributes that satisfies the access structure will be able to decrypt the message. It is assumed that the ciphertext implicitly contains $A$.
+    \item \textbf{CP Encrypt:} takes as input the public parameters $PK$, a message $M$, and an access structure $A$ over the universe of the attributes. The algorithm encrypt $M$ and produce a ciphertext $CT$ such that only a user that possesses a set of attributes that satisfies the access structure will be able to decrypt the message. It is assumed that the ciphertext implicitly contains $A$.
     \item \textbf{CP Key Generation:} takes as input the master key $MK$ and a set of attributes $S$ that describe the key. It outputs a private key $SK$.
-    \item \textbf{CP Decryption:} takes as input the public parameters $PK$, a ciphertext $CT$, which contains an access policy $A$, and a private key $SK$, which is a private key for a set $S$ of attributes. If $S$ satisfies $A$ then the algorithm will decript $CT$ and return the message $M$.
+    \item \textbf{CP Decryption:} takes as input the public parameters $PK$, a ciphertext $CT$, which contains an access policy $A$, and a private key $SK$, which is a private key for a set $S$ of attributes. If $S$ satisfies $A$ then the algorithm will decrypt $CT$ and return the message $M$.
     \item \textbf{CP Delegate:} takes as input a secret key $SK$ for some set of attributes $S$ and a set $\tilde{S} \subset S$. It outputs a secret key $SK$ for the set of attributes $\tilde{S}$. 
 \end{itemize}
+In summary, we can summarize the main difference between KP-ABE and CP-ABE in a single question: \textit{who decides who can read the document, the party that encrypts it or the party that issues the keys?}
+With KP-ABE the policy is embedded in the user's key, so it is fixed by the key issuer and whoever encrypts the document can only label it with attributes, with no means to control who will be able to read it.
+With CP-ABE, instead, the policy is embedded in the ciphertext, hence the decision belongs to whoever encrypts the document.
 
+Given that in PABEL the document owner must define who can read the document at encryption time, CP-ABE is the natural choice and, in fact, it is the scheme adopted in the rest of this work.
+Moreover, even if both approaches are collusion resistant (i.e. a user with attribute "finance" and another one with "management" cannot decrypt together something that they could not read alone), the well-known limits that CP-ABE implies are a good fit for our system and actually turn out to be consistent with our setting.
+
+First, the policy is fixed when the document is encrypted. This is acceptable here because a given policy expresses a decision taken beforehand by the company: changing it requires re-encrypting the document, an operation that a user or an agent can perform. Since the encryption is performed server-side, it also shifts the computational overhead entirely to the server.
+
+Second, the policies being monotone, which means \textit{access can only be granted and never subtracted by a negation}, is a deny-by-default behaviour that works perfectly in a scenario in which we want to \textit{specify who is permitted to read specific information}. Basically, anything that falls out of the scope prior defined by the document's owner is denied. This follows tha same reasoning behind a whitelist firewall, which is generally considered safer than a blacklist one: a blacklist \textit{must} anticipate every possible threat, so whatever is not foreseen is allowed, whereas a whitelist enumerates only what is legitimate, hence whatever is not foreseen is blocked.
+
+Third, revoking keys is notoriously hard, but in our system neither the user nor the agent ever holds one: keys are kept server-side, so revoking an agent is litterally a matter of deleting a database entry.
+
+Finally, CP-ABE relies on a single central authority that holds the master key; for a company that needs a single point of control and auditing, this is a feature rather than a drawback, although it places the server inside the trusted computing base.
 \subsection{Identity and Access Management}
-% TODO: breve descrizione dello IAM e aggiungere qualche immagine esplicativa del flusso
-\subsubsection{OAuth 2.0 and PKCE}
-% TODO: breve descrizione dell'OAuth e PKCE
-\subsubsection{Keycloak}
-% TODO: breve descrizione di Keycloak
+Identity and Access Management (IAM) is a set of processes and technologies that establish \textit{who} is making a request (authentication) and \textit{what} that party is allowed to do (authorization), keeping both decisions in a single, auditible place.
+A modern IAM typically provides a single sign-on (SSO), multi-factor authentication and a central directory of users together with their attributes (e.g. department, role, etc...).
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{media/diagrams/IAM.png}
+  \caption{A typical IAM flow}
+\end{figure}
+
+This last point is the one that matters the most for this work. In CP-ABE the capabilities of a user are entirely described by its attributes, so whoever is the authoritative source of those attributes is, de facto, the one deciding which key can exists.
+Delegating this role to an IAM means that attributes are not self-declared by the user or by the agent, but asserted by a trusted party and carried in a token.
+The same idea underlies attribute-based access control in general, where the authorization to perform an operation is determined by evaluating the attributes of the subject against a policy \cite{nist800162}.
+\subsubsection{OAuth 2.0 and PKCE}
+OAuth 2.0 is an authorization framework that allows a client application to obtain limited access to a resource on behalf of a user, without ever handling the user's credentials: it is used, instead, an \textit{access token}, which denotes a specific scope and lifetime \cite{rfc6749}.
+The user authenticates against an authorization server, which issues the token to the client; the token is then presented to the server that exposes the protected resource. Tokens are often encoded as JSON Web Tokens (JWT), a compact format for representing claims between parties that can be digitally signed \cite{rfc7519}
+Is it through such claims that user attributes can travel from the IAM to the other parts of the system.
+
+In the Authorization Code flow the client first receives a temporary \textit{authorization code} through a redirect and then exchanges it for a token. For public clients, such as command line tools or mobile and desktop applications, this code can be intercepted by a malicious application on the same device and the client has no safe place to store a secret that would prevent its use \cite{rfc7636}.
+Proof Key for Code Exchange (PKCE) closes this gap by generating a random \textit{code verifier} for each client's request and sends only its trasformation
+\begin{equation}
+    \texttt{code\_challenge} = \mathrm{BASE64\_URL}\big(\mathrm{SHA256}(\mathrm{ASCII}(\texttt{code\_verifier}))\big)
+\end{equation}
+with the authorization request, then discloses the verifier itself only when redeeming the code \cite{rfc7636}.
+An attacker who steals the code will not know the verifier and, since the use of SHA-256 as a one-way function, cannot derive it from the challenge.
+
+Although PKCE was originally designed for native applications, is current best practise to use for all kinds of OAuth clients, including confidential ones \cite{rfc9700}.
+\subsubsection{Keycloak}
+Keycloak is an open-source IAM based on standard protocols. It supports OpenID Connect, OAuth 2.0 and SAML.
+At its core there are those concepts:
+\begin{itemize}
+    \item \textit{realm:} manages a set of user, credentials, roles and groups;
+    \item \textit{client:} an entity that can request to authenticate a user;
+    \item \textit{protocol mapper:} it allows to select which claims are stored in the issued tokens.
+\end{itemize}
+Keycloak does also support one-time password (OTP), such as Time-based OTP (TOTP) and HMAC-based OTP (HOTP) through FreeOTP.
+We chose it because of its open-source nature, to being consistent with the assumption of an organization who does not want to rely on third parties.
 \subsection{The Model Context Protocol}
 % TODO: breve descrizione del MCP
 

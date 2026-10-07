@@ -89,7 +89,7 @@ The concept is simple: first a user get its token from Keycloak, then a cached a
 With this solution nobody needs to have installed its own key and it is strictly handled "in background", to both minimizing the risk of tampering and also to ensure a strict control over the allowed agents (it's easy as deleting a row in a db to disable entirely an agent from being used).
 
 \subsection{Human Identity via Keycloak}
-Obviously, the Keycloak login can and has to be used with two-factor-authentication (it can be enforced also a biometric login). The 2fa itself is out of this scope, but we mention \textbf{FreeOTP} as a free tool for an otp testing.
+Obviously, the Keycloak login can and has to be used with two-factor-authentication (it can also enforce a biometric login). The 2fa itself is out of this scope, but we mention \textbf{FreeOTP} as a free tool used for an otp testing.
 
 Once the user is logged in, and we can assume it is authenticated, then we can proceed to concede a token, containing the relevant attributes, that will be used to ask for the key of said user.
 
@@ -156,12 +156,12 @@ def render(decision: Decision) -> RenderedResponse:
     return RenderedResponse(stdout=json.dumps(output))
 \end{lstlisting}
 \subsection{Document Lifecycle}
-The document starts its life whenever it is created and encrypted by somenoe, say a manager, that has to include sensible information in said document.
+The document starts its life whenever it is created and encrypted by somenoe, say a manager, that has to include sensitive information in said document.
 Once the appropriate policy is defined and used to encrypt the document, it is stored and it become available through requst at the MCP server.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\textwidth]{media/diagrams/Document Lifecycle.drawio.png}
+  \includegraphics[width=\textwidth]{media/diagrams/Document Lifecycle.png}
   \caption{The flow diagram of the document lifecycle}
 \end{figure}
 
