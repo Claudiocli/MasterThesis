@@ -108,7 +108,7 @@ An attacker who steals the code will not know the verifier and, since the use of
 Although PKCE was originally designed for native applications, is current best practise to use for all kinds of OAuth clients, including confidential ones \cite{rfc9700}.
 \subsubsection{Keycloak}
 Keycloak is an open-source IAM based on standard protocols. It supports OpenID Connect, OAuth 2.0 and SAML.
-At its core there are those concepts:
+At its core there are these concepts:
 \begin{itemize}
     \item \textit{realm:} manages a set of user, credentials, roles and groups;
     \item \textit{client:} an entity that can request to authenticate a user;
@@ -117,7 +117,31 @@ At its core there are those concepts:
 Keycloak does also support one-time password (OTP), such as Time-based OTP (TOTP) and HMAC-based OTP (HOTP) through FreeOTP.
 We chose it because of its open-source nature, to being consistent with the assumption of an organization who does not want to rely on third parties.
 \subsection{The Model Context Protocol}
-% TODO: breve descrizione del MCP
+\blockcquote{mcpspec}{Model Context Protocol (MCP) is an open protocol that enables the integration between LLM applications and external data sources and tools.}
 
+It uses JSON-RPC 2.0 messages to establish communication between:
+\begin{itemize}
+    \item \textbf{\textit{Hosts:}} LLM applications that initiate the connection
+    \item \textbf{\textit{Clients:}} Connectors within the host
+    \item \textbf{\textit{Servers:}} Services that provide context and capabilities
+\end{itemize}
+More specifically, servers can offer to clients
+\begin{itemize}
+    \item \textbf{\textit{Resources:}} Context and data, for the user or the AI model to use
+    \item \textbf{\textit{Prompts:}} Templated messages and workflows for users
+    \item \textbf{\textit{Tools:}} Functions for the AI model to execute
+\end{itemize}
+And clients may offer, on the other end, \textbf{\textit{Elicitation}}, that is server-initiated requests for additional information from users.
+
+However, in any situation, since the powerful capabilities through arbitrary data access and code execution, an implementor \textit{must} carefully address \textbf{user explicit consent and} persistent \textbf{control} over what data is shared; \textbf{data privacy}, taking the appropriate measures, and ensuring that hosts must obtain explicit user consent before exposing data to servers; last, but not least, \textbf{tool safety}, since every tool represent an \textit{\textbf{arbitrary code execution}}.
+
+For our purposes, MCP provides not only a resource server, but also the legitimate channel through which the agent asks for a document: the server owns the decryption logic and returns only the content that the policy allows. The idea is to offer to agents a black box to interact with, so they would never handle sensitive informations or at least they would not be capable to retrieve what it is not them permitted.
 \subsection{Hook-Based Interception in AI Coding Agents}
-% TODO: breve descrizione di come funzionano gli hook, spiegare anche la difficoltà nel creare una skill in questo contesto
+Many coding agents expose \textbf{\textit{hooks}}, i.e. user-defined command that the agent's runtime execute at precise points of its lifecycle, such as before a tool call (\code{PreToolUse}), which can also block the call \cite{claudehooks,copilothooks}.
+In Claude Code, for instance, the hook receives the description of the event as JSON on standard input (tool name and arguments) and answers with a decision: allow the call, deny it with a reason, rewrite its input (\code{updatedInput}) or add context for the model (\code{additionalContext}).
+
+The crucial property is where the hook runs. An instruction written in a prompt or in a \code{skill} is only text that the model reads: it may be ignored, misinterpreted or even overridden by a prompt injection \cite{debenedetti2025defeating}, so it cannot be a security control.
+A hook is, instead, executed at runtime \textit{outside} the model's reasoning, hence its decision does not depend on the model's cooperation. This is why \textbf{we implement enforcement as a hook} and use \textbf{skills}, informationally, \textbf{only to explain to the agent \textit{why} a read was replaced}.
+
+Hooks are however not uniform across vendors. Copilot CLI, for example, documents a similar \code{preToolUse} event with a \code{permissionDecision} field, but it names the field that rewrites the arguments differently (\code{modifiedArgs}) and supports both camelCase and PascalCase formats \cite{copilothooks}.
+Moreover, some channels are not reliably delivered in practise (see the adapters in Section \ref{System Design}). This heterogenity motivtes the per-agent adapters of our design.
