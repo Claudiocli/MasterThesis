@@ -72,7 +72,7 @@ With CP-ABE, instead, the policy is embedded in the ciphertext, hence the decisi
 Given that in PABEL the document owner must define who can read the document at encryption time, CP-ABE is the natural choice and, in fact, it is the scheme adopted in the rest of this work.
 Moreover, even if both approaches are collusion resistant (i.e. a user with attribute "finance" and another one with "management" cannot decrypt together something that they could not read alone), the well-known limits that CP-ABE implies are a good fit for our system and actually turn out to be consistent with our setting.
 
-First, the policy is fixed when the document is encrypted. This is acceptable here because a given policy expresses a decision taken beforehand by the company: changing it requires re-encrypting the document, an operation that a user or an agent can perform. Since the encryption is performed server-side, it also shifts the computational overhead entirely to the server.
+First, the policy is fixed when the document is encrypted. This is acceptable here because a given policy expresses a decision taken beforehand by the company: changing it requires re-encrypting the document, an operation that neither a user nor an agent can perform. Since the decryption is not performed client-side, it also shifts the computational overhead entirely to a server.
 
 Second, the policies being monotone, which means \textit{access can only be granted and never subtracted by a negation}, is a deny-by-default behaviour that works perfectly in a scenario in which we want to \textit{specify who is permitted to read specific information}. Basically, anything that falls out of the scope prior defined by the document's owner is denied. This follows tha same reasoning behind a whitelist firewall, which is generally considered safer than a blacklist one: a blacklist \textit{must} anticipate every possible threat, so whatever is not foreseen is allowed, whereas a whitelist enumerates only what is legitimate, hence whatever is not foreseen is blocked.
 
@@ -117,7 +117,7 @@ At its core there are these concepts:
 Keycloak does also support one-time password (OTP), such as Time-based OTP (TOTP) and HMAC-based OTP (HOTP) through FreeOTP.
 We chose it because of its open-source nature, to being consistent with the assumption of an organization who does not want to rely on third parties.
 \subsection{The Model Context Protocol}
-\blockcquote{mcpspec}{Model Context Protocol (MCP) is an open protocol that enables the integration between LLM applications and external data sources and tools.}
+\blockcquote{mcpspec}{Model Context Protocol (MCP) is an open protocol that enables seemless integration between LLM applications and external data sources and tools.}
 
 It uses JSON-RPC 2.0 messages to establish communication between:
 \begin{itemize}

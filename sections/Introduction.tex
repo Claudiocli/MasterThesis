@@ -37,8 +37,9 @@ The AI agents used for testing are:
 \end{itemize}
 Throughout the project we used Python as main language, as well as Python libreries such as \textbf{PyJWT}, \textbf{FastMCP} and \textbf{Psycopg}.
 The server-side component of the system was containerized using \textbf{Rancher Desktop}, a tool that allows to run Kubernetes clusters on a local machine. This setup enables easy deployment and management of the server component, ensuring scalability and reliability in handling decryption requests from AI agents.
-Alongside the server container, there were deployed two other containers: one for the Keycloak server and another for a \textbf{PostgreSQL} database, which is used by Keycloak to store user and role information. This containerized approach simplifies the deployment process and allows for easy scaling of the system as needed.
+Alongside the server container, there were deployed two other containers: one for the Keycloak, which contains identities and attributes, server and another for a \textbf{PostgreSQL} database, which (in combination with Keycloak) store agent installation's information and generated keys. This containerized approach simplifies the deployment process and allows for an easy scaling of the system as needed.
 
 \subsection{Thesis outline}
 % TODO: ROADMAP
 After a description of the motivation and also a security overlay of this work in section \ref{Motivation and Threat Model}, we'll cover some background informations in section \ref{Background}, especially \nameref{ABE}, before heading in a in-depth analysis of the System Design in section \ref{System Design}.
+Will follow a Security Analysis in Section \ref{Security Analysis}, alongside some evaluations and the conclusions, respectively, in Sections \ref{Evaluation} and \ref{Conclusions}.

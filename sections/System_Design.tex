@@ -80,21 +80,65 @@ has to be created and stored beforehand. A user could also authenticate itself v
 The user-intended workflow is to login with \textbf{Keycloak} and only then he'd have access to the decryption of sections to him destinated.
 
 There is an implicit security system, that is any user with the "security level" (an attribute defined to test a hierarchy) less than the maximum security level used in the file cannot overwrite the file.
-\subsection{CP-ABE Authority and Key Management}
+\subsection{CP-ABE Authority and Key Management}\label{CP-ABE Authority and Key Management}
 It is clear that we have to have a central autorithy that could audit and grant accesses to documents. This operation is made by conjuncting both \textbf{Keycloak} and \textbf{Postgres}:
-While \textbf{Keycloak} holds every user's informations (e.g. mail, department, security level, etc...), and so its attributes, \textbf{Postgres} holds both the users' cached keys, once they recieved them from Keycloak, and a list of allowed agents with each own key.
+While \textbf{Keycloak} holds every user's informations (e.g. mail, department, security level, etc...), and so its attributes, \textbf{Postgres} holds a list of allowed agents with each own key.
 
 % TODO: Explain better this part
 The concept is simple: first a user get its token from Keycloak, then a cached and hashed key is kept in memory in a trusted sql database, and then, if in said database is found a key corresponding to the user's agent, the request is accepted by the server who will run the \textbf{OpenABE} operations to serve the decrypted file.
 With this solution nobody needs to have installed its own key and it is strictly handled "in background", to both minimizing the risk of tampering and also to ensure a strict control over the allowed agents (it's easy as deleting a row in a db to disable entirely an agent from being used).
 
 \subsection{Human Identity via Keycloak}
-Obviously, the Keycloak login can and has to be used with two-factor-authentication (it can also enforce a biometric login). The 2fa itself is out of this scope, but we mention \textbf{FreeOTP} as a free tool used for an otp testing.
+Obviously, the Keycloak login can and has to be used with two-factor-authentication (it can also enforce a biometric login). The 2FA itself is out of this scope, but we mention \textbf{FreeOTP} as a free tool used for an otp testing.
 
 Once the user is logged in, and we can assume it is authenticated, then we can proceed to concede a token, containing the relevant attributes, that will be used to ask for the key of said user.
 
 \subsection{Agent Identity Model}
+In the adversary model of this work the AI agnet is not trusted, so a policy that mentions the agent cannot rely on anything the agent declares about itself.
+The identity of the agent \textit{must} be established the same way as the identity of the human, that is by a credential that the agent cannot forge, verified by the server on every call.
 
+\subsubsection{What is Identified: Harness, Surface and Model}
+Three different things are usually called \textquote{the agent}:
+\begin{itemize}
+  \item \textbf{Harness:} the product that owns the tool-call loop and decides whether a file read happens (e.g. Claude Code, OpenCode)
+  \item \textbf{Surface:} it is where the harness runs (a terminal, an IDE extension, a desktop application) and only changes where configuration files live
+  \item \textbf{Model:} it is what reasons inside the harness (e.g. Sonnet, GPT, etc...)
+\end{itemize}
+PABEL identifies the harness and nothing else: it never sees the model, and no policy can name it. A clause naming a given harness is satisfied by an installation of that harness regardless of which model is running in it, and is not satisfied by a different harness driving the same model.
+The unit of trust is therefore the installed product plus the person using it.
+
+It is important to notice how the enumeration of the model and the surface of an agent is a challenge by itself.
+It is also important to remind that PABEL operates at layer 7, thus the impossibility to have an exact picture of what is running on the system; this could be theoretically achieved by implementing an enforcement at OS level.
+\subsubsection{Per-Installation Credentials}
+Each installation of a harness on a user's machine is registered by an administrator and receives its own Keycloak client, which needs to be authenticated with the OAuth 2.0 \code{client\_credentials} grant.
+The \code{client\_secret} is shown once at creation and handed over to the employee out of band. The credential is never reused across two harnesses: sharing it would give them a shared identity, which is exactly what this model prevents.
+
+On every call the server verifies the agent token as it does for the human one (signature, issuer and expiration) and then resolves the identity through a chain that starts from a value that the caller cannot choose:
+\begin{enumerate}
+  \item the \code{azp} (authorized party) claim of the token, i.e. \code{client\_id} that obtained it, stamped by Keycloak at issuance;
+  \item the row of the \code{agent\_installations} table that matches it, which tells whether the installaton exists and has not been revoked;
+  \item the row of the \code{agents} table of the product it belongs to, which tells wheter the product is enabled, which attribute it contribuites (e.g. \code{agent\_claude\_code}, \code{agent\_opencode}) and which role a user must hold to use it.
+\end{enumerate}
+The \code{agent\_id} comes out of this chain only after the token has been verified: it is never a parameter of a request, so no caller can claim one.
+
+Keycloak roles are very important and useful to handle specifically \textit{who} can use \textit{what}; someone without the role \code{agent\_claude\_code\_user} could not integrate the agent's attributes, i.e. policies that enforces \code{agent\_claude\_code} would fail.
+\subsubsection{Authorization of the Pair}
+There are two main types for a request denial when trying to authorize an agent.
+\begin{itemize}
+  \item An \textit{hard error} is considered whenever there is an invalid (or expired) token or when it is present an unknown or revoked installation and a disabled product, hence the request is simply denied.
+  \item A \textit{soft error} present itself if the installation is valid, but the user doesn't hold the role that the product requires (e.g. \code{agent\_claude\_code\_user}); the failure, in this case, resolves in the agent that contributes with no attribute at all. The same user is still authenticated, but any policy that names the agent will fail, so no special deny logic is required: not holding the role \textit{is} the denial.
+\end{itemize}
+So, whereas there is no \textit{hard error}, the attributes of the user and the one of the agent are then merged togheter in a single CP-ABE key (see Section \ref{CP-ABE Authority and Key Management}).
+A section sealed under a policy such as \code{sales and agent\_claude\_code} will open only for someone holding \code{sales} \textbf{\textit{and}} working through a registered Claude Code installation; changing either half keeps the section closed.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics{media/diagrams/Dual Verification Human-Agent.png}
+  \caption{The two identities verified by the server on every request}
+\end{figure}
+\subsubsection{Where the Identity Comes From and its Limits}
+As previously mentioned, the agent never holds its own token but it's the hook, instead, that injects the credential of the installation into the call (later expanded in \nameref{The Relay Hook}); the model does not need it and cannot read it.
+The strength of this identity is, however, bound to the protection of the credential store on the employee's machine. Whoever can read it can authenticate as that installation from anywhere; this is the compromised-endpoint scenario that is declared out of scope in the threat model.
 \subsection{Audit Logging}
 Each and every operation the agent make while calling the server is logged, both to log every access to each document and to ensure their confidentiality.
 Server-side it is all kept in a \code{audit.jsonl}, for semplicity's sake, but it can be enhanced.
@@ -102,12 +146,32 @@ Server-side it is all kept in a \code{audit.jsonl}, for semplicity's sake, but i
 
 \subsection{Core and Strategy Pattern}
 
-\subsubsection{The Relay Hook}
+\subsubsection{The Relay Hook}\label{The Relay Hook}
 
 \subsubsection{Per-Agent Adapters}
 Since each agent has its own way to be controlled, it is necessary to create a specific adapter for each one of them. The adapter is the component that will translate the generic workflow into agent-specific ones.
 The general approach is to fold the content of the decision into the agent's reasoning process, so that if the decision is \code{None}, or better, if there is a deny from the \code{core.decide} function, then the agent will not be able to access the document and so it will not be able to use it in its reasoning process.
 This is important because each and every agent has its own way to reason and use hooks, for example, Claude code uses \code{decision.updated\_input}, thanks to which we can impose the use of our tool; different story is for Copilot CLI we cannot fully rely to \code{additionalContext}.
+
+Table \ref{tab:channels} summarises, for each harness, how a denial travels back to the agent and where the relayed content lands.
+
+\begin{table}[htbp]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.22\textwidth}>{\raggedright\arraybackslash}p{0.34\textwidth}>{\raggedright\arraybackslash}p{0.38\textwidth}@{}}
+    \toprule
+    \textbf{Harness} & \textbf{Blocking channel} & \textbf{Content channel} \\
+    \midrule
+    OpenCode & exception thrown from \code{tool.execute.before} & folded into thrown message \\ \hline
+    Copilot (VS Code) & \code{permissionDecision} & \code{additionalContext} \\ \hline
+    Copilot CLI & \code{permissionDecision} & folded into \code{permissionDecisionReason} (\code{additionalContext} is unreliable) \\ \hline
+    Cursor & \code{permission}: alow, deny or ask & \code{agent\_message} \\ \hline
+    Codex CLI, ChatGPT desktop & none (no hook) & none \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{How each harness receives the denial and the relayed content}\label{tab:channels}
+\end{table}
 
 Following we can see fragments of those two implementations for Claude code and Copilot CLI, respectively:
 \begin{lstlisting}[language=Python, caption={Claude code adapter}]
@@ -155,6 +219,18 @@ def render(decision: Decision) -> RenderedResponse:
         output["hookSpecificOutput"]["additionalContext"] = json.dumps(decision.content)
     return RenderedResponse(stdout=json.dumps(output))
 \end{lstlisting}
+\subsubsection{Two Classes of Agents}\label{Two Classes of Agents}
+Agents differ on what their harness lets us control and this splits them into two categories:
+\begin{itemize}
+  \item \textbf{Interceptable agents}, which expose a hook that the runtime executes before a toll call; a direct read of a protected file can be blocked and replaced by the relayed, access-controlled result, without the model's intervention. Two example are Claude Code and OpenCode.
+  \item \textbf{MCP-only agents}, i.e. agents that provide no interception mechanism. PABEL tools are registered as ordinary MCP tools that the model is free to call or not. They are accompanied by an informational skill, which is guidance and not an enforcement.
+\end{itemize}
+It is important to state what this distinction does \textit{not} change, in fact, a protected file is encrypted in both cases, so its confidentiality does not depend on the hook.
+
+What the hook really adds is the impossibility to bypass the workflow, for example, by reaching the credential store, rewriting the hook configuration, invoking the OpenABE binaries directly (if available) or even lying about the agent's own identity.
+For an MCP-only agent these protections are not available and the agent is simply a client for the server like any other.
+
+The status of each harness is reported in Section \ref{Evaluation}
 \subsection{Document Lifecycle}
 The document starts its life whenever it is created and encrypted by somenoe, say a manager, that has to include sensitive information in said document.
 Once the appropriate policy is defined and used to encrypt the document, it is stored and it become available through requst at the MCP server.
