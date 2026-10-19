@@ -1,7 +1,7 @@
 \subsection{Architecture Overview}
 Our system is composed by two main component:
 \begin{itemize}
-    \item \textbf{server-side components:} the components include Identity and Access Management (\textbf{Keycloak}), database (\textbf{Postgres}), logic handler (\textbf{OpenABE}), MCP server.
+    \item \textbf{server-side components:} the components include Identity and Access Management (\textbf{Keycloak}), database (\textbf{Postgres}), MCP server that handles logic (with \textbf{OpenABE}).
     \item \textbf{client-side connectors:} adapter and hook grant connection and control over the AI agent.
 \end{itemize}
 The server-side components are designed to be each one indipendent from the others; we have containerized each one of them with \code{containerd} and made them available with Rancher Desktop.
@@ -116,7 +116,7 @@ The \code{client\_secret} is shown once at creation and handed over to the emplo
 On every call the server verifies the agent token as it does for the human one (signature, issuer and expiration) and then resolves the identity through a chain that starts from a value that the caller cannot choose:
 \begin{enumerate}
   \item the \code{azp} (authorized party) claim of the token, i.e. \code{client\_id} that obtained it, stamped by Keycloak at issuance;
-  \item the row of the \code{agent\_installations} table that matches it, which tells whether the installaton exists and has not been revoked;
+  \item the matching \code{agent\_installations} row, confirming that the installation exists and has not been revoked;
   \item the row of the \code{agents} table of the product it belongs to, which tells wheter the product is enabled, which attribute it contribuites (e.g. \code{agent\_claude\_code}, \code{agent\_opencode}) and which role a user must hold to use it.
 \end{enumerate}
 The \code{agent\_id} comes out of this chain only after the token has been verified: it is never a parameter of a request, so no caller can claim one.
@@ -144,7 +144,32 @@ Each and every operation the agent make while calling the server is logged, both
 Server-side it is all kept in a \code{audit.jsonl}, for semplicity's sake, but it can be enhanced.
 
 
-\subsection{Core and Strategy Pattern}
+\subsection{Connector Architecture}
+The shared core evaluates every tool call against the checks of Table \ref{tab:decide} in the order shown, and the first one that applies decides.
+Every outcome is also written to a local log on the client machine and the denials that would otherwise never reach the server are reported in it, so that it is kept an audit trail.
+
+\begin{table}[htbp]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}m{0.3\textwidth}>{\raggedright\arraybackslash}m{0.34\textwidth}>{\raggedright\arraybackslash}m{0.30\textwidth}@{}}
+    \toprule
+    \textbf{Check} & \textbf{Decision} & \textbf{Why} \\
+    \midrule
+    The call targets the local credential store & \code{DENY\_CREDENTIAL\_ACCESS} & secrets are used only by the connector's own code \\ \hline
+    A command references the connector's internals & \code{DENY\_HOOK\_BYPASS} & the hook is the only sanctioned way to run it \\ \hline
+    Direct call to the local PABEL tools & \code{ALLOW} & sanctioned call \\ \hline
+    Direct call to the deployed server's tools & \code{ALLOW}, agent token injected & the model never holds the credential \\ \hline
+    Write to a protected document & \code{DENY\_MUTATING} & PABEL has no authoring path \\ \hline
+    Write to the hook configuration & \code{DENY\_CONFIG\_TAMPER} & it would let the installation act as another agent \\ \hline
+    Command invoking the OpenABE binaries & \code{DENY\_OABE\_BINARY} & it would bypass the combined key and the audit \\ \hline
+    No protected target is mentioned & \code{ALLOW} & not a PABEL concern \\ \hline
+    Ambiguous target (directory, pattern, several files) & \code{DENY\_AMBIGUOUS} & it cannot be relayed automatically \\ \hline
+    One protected file & \code{DENY\_WITH\_RELAY}, or \code{DENY\_AUTH\_ERROR} / \code{DENY\_RELAY\_ERROR} on failure & the direct read is replaced by the server's result \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Decisions of the shared core, in evaluation order}\label{tab:decide}
+\end{table}
 
 \subsubsection{The Relay Hook}\label{The Relay Hook}
 
@@ -162,6 +187,7 @@ Table \ref{tab:channels} summarises, for each harness, how a denial travels back
     \toprule
     \textbf{Harness} & \textbf{Blocking channel} & \textbf{Content channel} \\
     \midrule
+    Claude Code & \code{permissionDecision} & \code{additionalContext} \\ \hline
     OpenCode & exception thrown from \code{tool.execute.before} & folded into thrown message \\ \hline
     Copilot (VS Code) & \code{permissionDecision} & \code{additionalContext} \\ \hline
     Copilot CLI & \code{permissionDecision} & folded into \code{permissionDecisionReason} (\code{additionalContext} is unreliable) \\ \hline
@@ -245,4 +271,34 @@ When an agent requests access to a document, the hook will intercept the request
 
 
 \subsection{Deployment Architecture}
+We hereby explain how the architecture is topologically composed and, more in detail, where each component stores its data.
+\subsubsection{Topology}
+PABEL is deployed on two kinds of machines: the \textbf{server host} and the \textbf{employee machine}. The first one runs three containers (Keycloak, PostgreSQL, MCP server) orchestrated with \code{nerdctl compose} on Rancher Desktop and it is managed by an admin, the second one runs the agent alongside the connector (hook, adapters and local credential store).
+The system was also tested with server and client on two different machines.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{media/image/Machine dichotomy.png}
+  \caption{The two types of machines}
+\end{figure}
+% TODO: Immagine riepilogativa
+It is worth note that only the container with the MCP server holds the CP-ABE authority and each employee machine reaches the server over the network.
 
+\subsubsection{Location of Each Component}
+The following table (Table \ref{tab:state}) lists, for each component, the state it holds and where.
+
+\begin{table}[htbp]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.33\textwidth}>{\raggedright\arraybackslash}p{0.23\textwidth}@{}}
+    \toprule
+    \textbf{Component} & \textbf{Runs on} & \textbf{State} & \textbf{Persistence} \\
+    \midrule
+    Keycloak & server host & users, attributes, roles, agent clients & inside the container, no volume \\
+    PostgreSQL & server host & \code{agents}, \code{agent\_installations}, \code{agent\_keys}, \code{audit\_log} & volume \code{pgdata} \\
+    MCP server & server host & master public and secret keys, \code{audit.jsonl} & bind mounts \code{authority} and \code{state} \\
+    Connector & employee machine & agent credential, human session & user directory \code{\textasciitilde/.pabel/} \\
+    \bottomrule    
+  \end{tabular}
+  \endgroup
+  \caption{State held by each component and where it is stored}\label{tab:state}
+\end{table}
