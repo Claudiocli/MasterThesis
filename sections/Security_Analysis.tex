@@ -108,7 +108,11 @@ Its custody is assumed in the threat model (Section \ref{Motivation and Threat M
 When the server outputs the decrypted data to the agent, the guarantees of PABEL end (as shown in Figure \ref{fig:boundary}).
 The agent, its vendor, the user or an injected instruction can send them anywhere and no application-level mechanism can prevent it.
 What the system offers is minimization and accountability: only the sections that the user and the agent are entitled to are released, not the whole document; every release is recorded with the number of readable sections and the copies explicitly requested are deleted at the end of the session via session-end hook.
-
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{media/diagrams/Security Boundary.png}
+    \caption{PABEL's security boundary}\label{fig:boundary}
+\end{figure}
 \paragraph{Residual risk} The data exposed to the vendor is exactly the data the policy allows and no more; what the vendor, the model or the user does with it is outside the control of this work.
 
 \subsection{Limitations}
