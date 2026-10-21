@@ -33,7 +33,7 @@ Besides, IBE did point towards ABE; we can see how \citeauthor{sahai2005fuzzy} a
 This occurs by considering an identity as a set of attributes and, precisely for that, FIBE for the first time achieved error tolerance; it allows for a private key for an identity, say $\omega$, to decrypt a ciphertext encrypted with an identity $\omega'$ if and only if $|\omega \cap \omega'| \geq d$, where $d$ is fixed during the setup and indicates the error tolerance threshold.
 
 \citeauthor{goyal2006attribute}, later proposed a better implementation that was further expanded by \citeauthor{bethencourt2007ciphertext}, de facto introducing, respectively, KP-ABE and CP-ABE.
-\subsubsection{Ciphertext-Policy versus Key-Policy ABE}
+\subsubsection{Ciphertext-Policy versus Key-Policy ABE}\label{CPvsKP}
 The main difference between KP and CP ABE is their approach to the policy needed to decrypt.
 While in the Key-Policy ABE the key holds the policy for the identity, in the Ciphertext-Policy ABE is the ciphertext that holds said policy.
 In other words, for a KP approach, think of a company that encrypt all its mails with the headers as attributes, say\\

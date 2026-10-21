@@ -66,7 +66,7 @@ The actors, with their own goals, involved in the system are:
     \item \textbf{IT/Cybersec:} the company's departments responsable for the security of the documents (i.e. encrypting, authorizing and auditing) and the company allthoghether
 \end{itemize}
 
-\subsection{Assumptions}
+\subsection{Assumptions}\label{Assumptions}
 We assume that the documents subject to protection are already produced and encrypted via Attribute-Based Encryption before being made available to the system described in this work. Authoring a new document, defining its access policy, ensuring the freshness of employees' attributes, generating the corresponding keys, encrypting the document, are all separate concerns and fall out of the scope of this thesis, which focuses on enforcing, at read time, a mechanism that allows an AI agent to process the document following a safe workflow, minimizing the risk of sensitive data exfiltration.
 
 We also assume that our garantees end at the moment decrypted content is legitimately handed to the requesting AI agent, in accordance with the CP-ABE policy and the combined attributes of the user and the agent.

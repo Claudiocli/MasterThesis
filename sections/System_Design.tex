@@ -93,7 +93,7 @@ Obviously, the Keycloak login can and has to be used with two-factor-authenticat
 
 Once the user is logged in, and we can assume it is authenticated, then we can proceed to concede a token, containing the relevant attributes, that will be used to ask for the key of said user.
 
-\subsection{Agent Identity Model}
+\subsection{Agent Identity Model}\label{Agent Identity Model}
 In the adversary model of this work the AI agnet is not trusted, so a policy that mentions the agent cannot rely on anything the agent declares about itself.
 The identity of the agent \textit{must} be established the same way as the identity of the human, that is by a credential that the agent cannot forge, verified by the server on every call.
 
@@ -172,6 +172,34 @@ Every outcome is also written to a local log on the client machine and the denia
 \end{table}
 
 \subsubsection{The Relay Hook}\label{The Relay Hook}
+Blocking a read of a protected document would be safe but it would imply that the agent would simply be unable to work with it.
+The relay hook, instead, \textit{replaces} the blocked read with the access-controlled result of the server, so the agent see the outcome as a normal answer in which some sections may be denied.
+
+The flow of Figure \ref{fig:relay} applies when the shared core finds exactly one protected file in the call (i.e. the last row of table \ref{tab:decide}).
+A file is recognised by its \code{.abe} extension first, so that it is protected whenever it is mentioned.
+
+The flow can be summarized in these steps:
+\begin{enumerate}
+  \item The hook is fired when a request contains a \code{.abe} file.
+  \item It attaches two credentials to the request, neither of which is visible to the model. The first one is the human session and the second one is the installation token.
+  \item If there is no valid human session, the hook itself starts the interactive browser login, retrying once. The login itself is hosted by Keycloak and if it fails both tries, the request is denied.
+  \item The server verifies both tokens, merges the attributes into a single key and decrypts each group. It return \textit{every} section of the document, each one either in plaintext or as \code{[ACCESS DENIED]}; this way the shape of the document is maintained and it is the same for every caller (no analysis can be done on the size of the network packet).
+  \item The hook returs a denial of the original read whose content is the result of the server. The adapter writes it in the channel of the specific harness (Table \ref{tab:channels}), thus giving it to the model instead of the file.
+\end{enumerate}
+Every failure along the way (no authentication, unreachable server, error of the relay) ends in a denial with a message and never in a direct read, thus ensuring that the agent would not reason on it.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{media/diagrams/Relay Hook flow.png}
+  \caption{Flow of the relay of a protected read}\label{fig:relay}
+\end{figure}
+\paragraph{Direct tool calls}
+The hook is not the only path. The connector registers the MCP server which offers \code{whoami}, \code{read\_document}, \code{login} and \code{materialize\_document} as ordinary tools.
+Those are the main function that every harness, even those without hooks (see Section \ref{Two Classes of Agents}), providing functionalities if a hook fired or not. In case of a harness with hooks, calls to the tools are allowed after it has injected the token of the installation into their arguments, so that the model never has to hold or manage it.
+\paragraph{Local copies}
+When a copy of a document is requested, \code{materialize\_document} writes the recieved content into a local cache. In case of a PDF (or any file, for the matter), it is rebuilt from the single parts that are returned omitting, or (if the user requested it) marking as "ACCESS DENIED", the denied sections. The server's output does not obfuscate the denied parts, it never sends them.
+
+From the moment the document is given, PABEL no longer governs it, which is why the copy is deleted when the session ends, bounding the exposure to one session (see Asssumptions in section \ref{Assumptions}).
 
 \subsubsection{Per-Agent Adapters}
 Since each agent has its own way to be controlled, it is necessary to create a specific adapter for each one of them. The adapter is the component that will translate the generic workflow into agent-specific ones.
