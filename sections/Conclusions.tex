@@ -29,10 +29,12 @@ As per today, the distance from the target deployment is summarized in the follo
     Client enforcement & hook per user; managed deployment only for Claude Code & managed deployment for every harness that supports it \\
     Key cache & purged by hand if the authority is replaced & invalidated automatically when the authority changes \\
     Audit & JSON lines and a PostgreSQL mirror, local log not tamper-proof & append-only central storage \\
+    Local copies & deleted at the end of the session only for Claude Code & deleted for every harness, with a time-based cleanup where no session-end hook exists \\
     \bottomrule
   \end{tabular}
   \endgroup
   \caption{From the prototype to the target deployment}\label{tab:target}
 \end{table}
 
-All the guarantees will hold and so will do the assumptions, all the future developments will increase the overall security and usability of this work.
+In the target deployment the guarantees described in this work are expected to hold and so are the assumptions.
+All future developments will surely increase the overall security and usability of this work.

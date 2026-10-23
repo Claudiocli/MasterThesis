@@ -76,7 +76,7 @@ First, the policy is fixed when the document is encrypted. This is acceptable he
 
 Second, the policies being monotone, which means \textit{access can only be granted and never subtracted by a negation}, is a deny-by-default behaviour that works perfectly in a scenario in which we want to \textit{specify who is permitted to read specific information}. Basically, anything that falls out of the scope prior defined by the document's owner is denied. This follows tha same reasoning behind a whitelist firewall, which is generally considered safer than a blacklist one: a blacklist \textit{must} anticipate every possible threat, so whatever is not foreseen is allowed, whereas a whitelist enumerates only what is legitimate, hence whatever is not foreseen is blocked.
 
-Third, revoking keys is notoriously hard, but in our system neither the user nor the agent ever holds one: keys are kept server-side, so revoking an agent is litterally a matter of deleting a database entry.
+Third, revoking keys is notoriously hard, but in our system neither the user nor the agent ever holds one: keys are kept server-side, so revoking an agent is litterally a matter of deleting a database entry or updating it with a "revoked" flag.
 
 Finally, CP-ABE relies on a single central authority that holds the master key; for a company that needs a single point of control and auditing, this is a feature rather than a drawback, although it places the server inside the trusted computing base.
 \subsection{Identity and Access Management}

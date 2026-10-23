@@ -8,9 +8,10 @@ Each subsection will explain for each threat the scenario and its causes, provid
         \textit{\textbf{Threat}} & \textit{\textbf{Attack Goal}}       & \textit{\textbf{PABEL Mitigation}}   \\ \hline
         Unauthorized user        & Read protected data                 & Human authentication + ABE           \\ \hline
         Unauthorized agent       & Read protected data                 & Agent identity + ABE                 \\ \hline
-        User / Agent mismatch    & Bypass policy                       & Combined attributes                  \\ \hline
-        Agent Impersonation      & Fake agent identity                 & Installation credentials             \\ \hline
+        User-Agent Collusion     & Bypass policy                       & Combined attributes                  \\ \hline
         Prompt injection         & Trick agent into requesting secrets & Interception + authorization         \\ \hline
+        Agent Impersonation      & Fake agent identity                 & Installation credentials             \\ \hline
+        Credential theft         & Obtain a secret to act as a user or an installation & Both principals required, revocable credentials \\ \hline
         Network attacker         & Steal / forge traffic               & \raggedright Token verification + TLS {[}+ VPN{]} (see Section \ref{Future Development})\arraybackslash \\ \hline
         Compromised endpoint     & Read plaintext                      & Out of scope                         \\ \hline
         Master Key compromise    & Decrypt everything                  & Operational key protection           \\ \hline
@@ -84,7 +85,7 @@ An attacker, with only a user token could obtain a key that lacks the attributes
 In any case tokens have a limited lifetime, furthermore, an installation can be revoked simply fagging it and a user could be easily disabled by the identity provider.
 
 \paragraph{Residual risk} The cached keys are decryption keys: whoever holds them can decrypt offline whatever attributes they satisfy, althoudh they cannot generate other keys.
-\textbf{N.B.} In this work, both keys and secrets are on the client machine with no further protection (see Section \ref{Future Development}).
+\textbf{N.B.} In this work, both keys and secrets are, respectively, in PostgreSQL and in a directory of the client, with no further protection (see Section \ref{Future Development}).
 
 \subsection{Network Attacker}
 An attacker observes or modifies the traffic between client and server.
@@ -101,7 +102,7 @@ The consequences are nevertheless bounded, since document not yet read are still
 
 \subsection{Master Key Compromise}
 Whoever holds the master secret key can generate a key for any set of attributes and no policy could resist them: the authority is the root of trust of the whole system (Section \ref{Background}).
-Ideally, the key is created inside the server, never sent elsewhere and used only by the server itself whithin the scope of the authoring tool.
+Ideally, the key is created inside the server, never sent elsewhere and used only by the server itself whithin the scope of the authoring tool (see \nameref{ABEditor}).
 Its custody is assumed in the threat model (Section \ref{Motivation and Threat Model}) and the only remedy to such scenario is a new authority that would make previous encrypted document unreadable.
 
 \subsection{Post-Decryption Leakage}\label{sec:postdecryption}
