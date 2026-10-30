@@ -22,7 +22,7 @@ This approach ensures that sensitive information remains protected when accessed
 The result is a working end-to-end system: a CP-ABE capable MCP server, an agnostic connector that has been verified against multiple agents and a hardened workflow to ensure agents' identites.
 \subsection{Technologies and Tools}
 To achieve the goals of this thesis, several technologies and tools have been utilized.
-The core of the security mechanism is based on Attribute-Based Encryption (ABE), more in particular we have used the open source library \textbf{OpenABE}\cite{openabe}, which we had to upgrade to a more recent version by updating its dependecies and fixing some bugs that were present in the original code.
+The core of the security mechanism is based on Attribute-Based Encryption (ABE), more in particular we have used the open source library \textbf{OpenABE}\cite{openabe}, which we had to upgrade to a more recent version by updating its dependecies and fixing some bugs that were present in the original code (Section \ref{sec:openabe}).
 
 Another important component of the system is the authentication and authorization mechanism, which is implemented using \textbf{Keycloak}, an open-source identity and access management solution. Keycloak provides a robust framework for managing user identities, roles, and permissions, which is essential for enforcing access control policies in the context of ABE.
 

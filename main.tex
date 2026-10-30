@@ -72,6 +72,10 @@
 \begin{titlepage}
 \input{sections/Title}
 \end{titlepage}
+% \newpage
+% \begin{abstract}
+% AI coding agents send the content of the files they read to a third-party model provider; once data leaves the organization, trusting the agent or the vendor is not a guarantee. This thesis presents PABEL, a system that replaces this trust with cryptography: documents are encrypted with Ciphertext-Policy Attribute-Based Encryption (CP-ABE), section by section, each under its own policy, satisfied only by the combined attributes of the human user \emph{and} of the specific agent acting on their behalf. An MCP server performs all the decryption, Keycloak authenticates the user and identifies every agent installation, and a connector on the employee's machine intercepts the file accesses of the agent through hooks and relays them to the server. The agent never holds keys and receives only the sections its user--agent pair may read. The evaluation compares observed and expected outcomes for every pair, runs attack scenarios derived from the threat model and measures the cost of the interception. It also shows where the guarantees end: after the plaintext is released, and for agents that cannot be intercepted.
+% \end{abstract}
 \newpage
 \tableofcontents
 \newpage

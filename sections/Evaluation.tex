@@ -1,22 +1,180 @@
 \subsection{Evaluation Goals}
+This section will focus on the evaluation done throughout this work.
+The main question we want to address are:
+\begin{itemize}
+  \item Does the system give exactly the sections the corresponding policy allows?
+  \item Does the system resist the attacks defined in the threat model (Section \ref{Motivation and Threat Model})?
+  \item How mnay resources the system uses?
+  \item Does the system works on a single machine with more than one agent?
+\end{itemize}
+Each of those questions is addressed in the following subsections.
 
 \subsection{Experimental Setup}
+Before presenting the observed results, we present to the reader how the system is setup.
+
+All of the tests are run in a single machine that host multiple containers for the server-side components and multiple client installation for each agent on said machine.
+Claude Code and OpenCode are the most used agents, but we mention also Codex and Copilot as alternatives tried in some tests.
+
+Documents were built purposely with ABEditor (see Section \ref{ABEditor}), which also provides the expected outcome for each section.
+It is also important to note that we have used fictitious users defined with their own attributes as following:
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{User} & \textbf{ABE Attributes} & \textbf{Agents allowed (role)} \\
+    \midrule
+    alice & ceo, executive, security  & Claude Code, opencode \\
+    bob & hr, sales, marketing  & Claude Code \\
+    charlie & dev, risk, executive  & opencode \\
+    \bottomrule
+  \end{tabular}
+  \caption{Fictitious users: attributes (claim \code{abe\_attributes}) and agents roles defined in this realm.}\label{tab:eval-users}
+\end{table}
+
+\subsection{Automated Tests}
+Table \ref{tab:eval-unit} lists the 258 automated tests by area. They do not need neither containers, nor database, nor OpenABE, htey tests the actual code, i.e. the decision logic, the agent adapters, the installers and the client.
+
+% ---------------------------------------------------------------- unit tests
+\begin{table}[H]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.6\textwidth}r@{}}
+    \toprule
+    \textbf{Suite} & \textbf{Area} & \textbf{Tests} \\
+    \midrule
+    connector & Detection and decision (\code{decide}, \code{detection}, \code{hook}) & 60 \\
+    connector & Agent adapters                                                         & 37 \\
+    connector & Installers and CLI (\code{install}, \code{doctor}, \code{global}, managed settings) & 89 \\
+    connector & Client (relay, sessions, local audit log, materialize, recompose, local MCP) & 48 \\
+    server    & Document model, agent resolution, audit and keys, \code{.abe} line endings & 24 \\
+    \midrule
+    \multicolumn{2}{@{}l}{\textbf{Total}} & \textbf{258} \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Automated tests by area: 258 tests, 257 pass and 1 skipped because \code{pymupdf} is not installed. None of them needs a container, a database or OpenABE.}\label{tab:eval-unit}
+\end{table}
 
 \subsection{Functional Correctness}
+Each document was opened by every user-agent pair and for each section the observed outcome was compared with the one expected from its policy and from the attributes of the pair.
+Table \ref{tab:eval-matrix} reports the number of readable sections.
 
-\begin{tabular}{@{}>{\raggedright\arraybackslash}m{0.14\textwidth}>{\raggedright\arraybackslash}m{0.18\textwidth}>{\raggedright\arraybackslash}m{0.22\textwidth}>{\raggedright\arraybackslash}m{0.22\textwidth}>{\raggedright\arraybackslash}m{0.12\textwidth}@{}}
-  \toprule
-  \textbf{User} & \textbf{Agent} & \textbf{Expected (ABEditor)} & \textbf{Observed (PABEL)} & \textbf{Result} \\
-  \midrule
-  alice & claude-code & 3/3 & 3/3 & pass \\
-  % ...
-  \bottomrule
-\end{tabular}
+The same user obtains different sections through different agents (e.g. alice: 3/3 with Claude Code, 2/3 with opencode) and an installation used without its role is recognized but recieves no agent attributes (e.g. bob with opencode).
+
+Reads recorded during development (Table \ref{tab:eval-audit}) show the same pattern, but they come from usage and not from a controlled experiment.
+
+\begin{table}[H]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}m{0.14\textwidth}>{\raggedright\arraybackslash}m{0.18\textwidth}>{\raggedright\arraybackslash}m{0.22\textwidth}>{\raggedright\arraybackslash}m{0.22\textwidth}>{\raggedright\arraybackslash}m{0.12\textwidth}@{}}
+    \toprule
+    \textbf{User} & \textbf{Agent} & \textbf{Expected (ABEditor)} & \textbf{Observed (PABEL)} & \textbf{Result} \\
+    \midrule
+    alice & claude-code & 3/3 & 3/3 & pass \\
+    alice & opencode    & 2/3 & 2/3 & pass \\
+    bob   & claude-code & 2/3 & 2/3 & pass \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Readable sections per user--agent pair on a purpose-built document of three sections: outcome expected from the policies and outcome observed through PABEL.}\label{tab:eval-matrix}
+\end{table}
+
+% ---------------------------------------------------------------- audit
+\begin{table}[H]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}rllrr@{}}
+    \toprule
+    \textbf{Sections} & \textbf{User} & \textbf{Agent} & \textbf{Readable} & \textbf{Runs} \\
+    \midrule
+    3  & alice   & opencode        & 2/3   & 2 \\
+    3  & alice   & vscode          & 0/3   & 2 \\
+    3  & charlie & chatgpt-desktop & 1/3   & 2 \\
+    4  & alice   & opencode        & 3/4   & 2 \\
+    4  & bob     & claude-code     & 3/4   & 2 \\
+    39 & alice   & claude-code     & 17/39 & 4 \\
+    39 & alice   & opencode        & 5/39  & 3 \\
+    39 & charlie & opencode        & 18/39 & 2 \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Reads recorded in the server audit log (\code{read\_document}, outcome ok) whose value was the same in at least two runs. Pairs that gave different values between runs (document or attributes changed) are left out: alice/claude-code and bob/opencode on 3 sections, bob/claude-code on 3 and 39 sections. The rows come from usage, not from a controlled experiment.}\label{tab:eval-audit}
+\end{table}
 
 
 \subsection{Security Tests}
+The scenarios of Table \ref{tab:eval-security} were run through the real entry point of the hook, without a server and with fake credentials, so they test the interception and not the server.
+Since they were written together with the rules, they are regression tests more than indepentent evidence. For this reason, the same attacks were repeated in a different way (Table \ref{tab:eval-probes}).
+
+% ---------------------------------------------------------------- security
+\begin{table}[H]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}llcc@{}}
+    \toprule
+    \textbf{Threat} & \textbf{Scenarios} & \textbf{Run} & \textbf{Result} \\
+    \midrule
+    Unauthorized user (direct read, 5 tools)        & U1--U5 & 5 & 5 pass \\
+    Prompt injection (folder enumeration)            & N1--N2 & 2 & 2 pass \\
+    Tampering with a document                        & M1--M2 & 2 & 2 pass \\
+    Credential theft                                 & K1--K4 & 4 & 4 pass \\
+    Agent impersonation                              & I1--I5 & 5 & 5 pass \\
+    Bypassing the server (\code{oabe\_*} binaries)   & O1--O2 & 2 & 2 pass \\
+    Injection of the installation credential         & J1--J3 & 3 & 3 pass \\
+    No false positives                               & A1--A4 & 4 & 4 pass \\
+    \midrule
+    \textbf{Total} & & \textbf{27} & \textbf{27 pass} \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Attack scenarios run through the real hook entry point, without a server and with fake credentials. In U1--U5 the plaintext of the document never appears in the output; in J2 an \code{agent\_token} forged by the model is replaced by the one of the installation.}\label{tab:eval-security}
+\end{table}
+
+None of the eight variants was blocked. The credential check compares the litteral path, so \code{\textasciitilde}, \code{\$HOME}, a search or a glob on the credential folder escape it.
+The rules on \code{oabe\_*} binaries and on the connector modules, apply only to the \code{Bash} tool and the protection of the configuration only to \code{Write} and \code{Edit}.
+These gaps do not expose protected documents, which remain ciphertext, nor allow acting alone as a user, because both principals are still required (Section \ref{Security Analysis}). They do show that the claim that the model cannot read the credential holds only for the literal path, and they are listed in Section \ref{Future Development}.
+
+\begin{table}[H]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}llc@{}}
+    \toprule
+    \textbf{ID} & \textbf{Variant} & \textbf{Result} \\
+    \midrule
+    E1 & \code{oabe\_dec} from the \code{PowerShell} tool                      & not blocked \\
+    E2 & import of \code{pabel\_connector} from \code{PowerShell}              & not blocked \\
+    E3 & \code{cat \textasciitilde/.pabel/agent\_credentials.json}             & not blocked \\
+    E4 & \code{cat \$HOME/.pabel/session.json}                                 & not blocked \\
+    E5 & \code{Grep} on the credential folder                                  & not blocked \\
+    E6 & glob \code{.pabel\textbackslash*.json}                                & not blocked \\
+    E7 & rewriting \code{.claude/settings.json} with a shell redirect          & not blocked \\
+    E8 & rewriting \code{.claude/settings.json} from \code{PowerShell}         & not blocked \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Probes: the same attacks in a different shape, all of which should be denied. The hook answers \code{ALLOW}; the attacks were not executed. The credential check compares the literal path; \code{DENY\_OABE\_BINARY} and \code{DENY\_HOOK\_BYPASS} apply only to the \code{Bash} tool, and \code{DENY\_CONFIG\_TAMPER} only to \code{Write} and \code{Edit}.}\label{tab:eval-probes}
+\end{table}
+
 
 \subsection{Agent Coverage}
+
+\begin{table}[H]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    \textbf{Agent} & \textbf{Class} & \textbf{Interception} & \textbf{Server-side enforcement} \\
+    \midrule
+    Claude Code       & hook     & verified   & observed \\
+    opencode          & hook     & verified   & observed \\
+    Copilot (VS Code) & hook     & unreliable & observed (alice: 0/3) \\
+    ChatGPT desktop   & MCP only & none       & observed (charlie: 1/3) \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Coverage by agent (classes in Section \ref{Two Classes of Agents}). The server applies the same checks to every agent, only the interception depends on the hooks of the harness. Server-side figures come from Table \ref{tab:eval-audit}.}\label{tab:eval-coverage}
+\end{table}
 
 \subsection{Performance}
 
@@ -24,8 +182,48 @@
 \subsubsection{Latency of a protected read}
 \subsubsection{Cost of the hook}
 
+% ---------------------------------------------------------------- performance
+\begin{table}[H]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    \textbf{Measure} & \textbf{Median (ms)} & \textbf{p95 (ms)} & \textbf{Runs} \\
+    \midrule
+    Python interpreter (\code{python -c pass})                 & 115  & 124  & 30 \\
+    Loading the hook code                                       & 1307 & 1387 & 30 \\
+    Hook on an unrelated call (\emph{allow})                    & 1312 & 1380 & 30 \\
+    Hook on a local denial (\emph{deny})\textsuperscript{a}     & 1322 & 1418 & 30 \\
+    \midrule
+    Decision alone, in-process                                  & \multicolumn{3}{l}{0.038 ms per call (2000 iterations)} \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Cost of the hook, as wall-clock time of the whole process (3 warm-up runs discarded, measures interleaved). Loading the modules accounts for about 1.19 s: \code{mcp} alone takes 710 ms out of 1097 ms with \code{-X importtime}. \textsuperscript{a}Without the round trip to the server, capped at 3 s. The virtual environment sits inside OneDrive, so the absolute values depend on the machine.}\label{tab:eval-hook}
+\end{table}
+
 \subsection{Deployment on Two Machines}
 
-\subsection{Automated Tests}
+\subsection{Case Study: Nexora Demo}
+
+\subsection{Summary of the Results}
+
+% ---------------------------------------------------------------- summary
+\begin{table}[H]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}lcl@{}}
+    \toprule
+    \textbf{Test} & \textbf{Run} & \textbf{Result} \\
+    \midrule
+    Automated tests (connector and server)      & 258 & 257 pass, 1 skipped \\
+    Functional matrix (user--agent pairs)       & 3   & 3 pass \\
+    Security scenarios (baseline)               & 27  & 27 pass \\
+    Security scenarios (probes)                 & 8   & 0 blocked \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Summary of the tests run. The cost of the hook is reported in Table \ref{tab:eval-hook}.}\label{tab:eval-summary}
+\end{table}
 
 \subsection{Limits of the Evaluation}
