@@ -17,6 +17,7 @@
 \usepackage[style=numeric, sorting=none]{biblatex}
 \usepackage{csquotes}
 \usepackage{float}
+\usepackage{pgfplots}
 
 \addbibresource{bibliografia.bib}
 \hypersetup{hidelinks}
@@ -68,13 +69,23 @@
 
 \newcommand{\code}[1]{\texttt{#1}}
 
+\providecommand{\todo}[1]{\textcolor{red}{[#1]}}
+
 \begin{document}
 \begin{titlepage}
 \input{sections/Title}
 \end{titlepage}
+% TODO: far verificare dal prof
 % \newpage
 % \begin{abstract}
-% AI coding agents send the content of the files they read to a third-party model provider; once data leaves the organization, trusting the agent or the vendor is not a guarantee. This thesis presents PABEL, a system that replaces this trust with cryptography: documents are encrypted with Ciphertext-Policy Attribute-Based Encryption (CP-ABE), section by section, each under its own policy, satisfied only by the combined attributes of the human user \emph{and} of the specific agent acting on their behalf. An MCP server performs all the decryption, Keycloak authenticates the user and identifies every agent installation, and a connector on the employee's machine intercepts the file accesses of the agent through hooks and relays them to the server. The agent never holds keys and receives only the sections its user--agent pair may read. The evaluation compares observed and expected outcomes for every pair, runs attack scenarios derived from the threat model and measures the cost of the interception. It also shows where the guarantees end: after the plaintext is released, and for agents that cannot be intercepted.
+% AI coding agents can send the content of the files they read to a third-party model provider and, once data leaves the organization, trusting the agent or the vendor offers no guarantee.
+% This thesis presents PABEL, a system that enforces access to documents via a cryptographic approach: files are encrypted with Ciphertext-Policy Attribute-Based Encryption, section by section, each with its own policy.
+% Said policy can be satisfied only by the combined attributes of both the user \emph{and} the specific agent installation acting on their behald.
+
+% An MCP server performs all decryptions, Keycloak authenticates both parties and a connector on the client machine intercepts file accesses through the hooks of the agent.
+% The latter will not hold any key and recieves only the section its pair may read.
+
+% We contribuited to a port of OpenABE to OpenSSL 4, RELIC 0.7 and C++17.
 % \end{abstract}
 \newpage
 \tableofcontents

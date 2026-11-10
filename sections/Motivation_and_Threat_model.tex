@@ -56,8 +56,45 @@ To better explain this concept, by considering the use of a TEE provided by some
 
 Summarizing, even though TEEs \textquote[\cite{han2026automated}]{minimizes potential security issues such as data leakage, unauthorized access, code tampering, and software-based attacks}, they do not take in consideration the cases in which a company does want to fine grain the data that escape the company's domain.
 \subsection{Related Works}\label{related}
-To the best of our knowledge a few, if not none, of recent works constain what an AI agent may do rather than what it may read.
-A few example can be 
+Recent works on the security of LLM agents were released with the aim of constraining what an AI agent may do, rather than what it may read.
+
+We can group those related work into four aspects, each of which addresses a part of the problem tackled in this work, but none of which, to the best of our knowledge, combines per-section cryptographic enforcement with the identity of both user and agent.
+
+\paragraph{Constraining what the agent may do.}
+Several proposal limit the \emph{actions} of an agent, rather than the data it can read. CaMeL \cite{debenedetti2025defeating} separates control flow and data flow, so that untrusted content cannot alter the plan of the agent.
+
+\paragraph{Access control for retrieval and tool use.}
+Retrieval-augmented generation (RAG) \cite{bhatt2025enterpriseaienforceparticipantaware} systems and MCP servers commonly enforce permissions with ACLs or ABAC at application layer \cite{nist800162, bhatt2025enterpriseaienforceparticipantaware}.
+Those designs store a policy in a database's row that the same service evaluates and can still silently bypass.
+The document is in plaintext or encrypted with a key held onto the same service, but in PABEL the policy is bound to the ciphertext, thus a file copied outside the system stays unreadable.
+
+\paragraph{Identity of agents.}
+Authantication of agents is being discussed in the OAuth/OpenID community \cite{oauth-ai-agents-on-behalf-of-user-02} and in the MCP authorization specification \cite{mcpspec}.
+Existing proposal identify a client acting on behalf of a user, but the resulting identity is used to authorize API calls and not as an attribute that enters a cryptographic policy.
+Using the harness as an attribute of the key is, to our knowledge, specific to this work.
+
+\paragraph{Cryptographic approaches.}
+ABE has been proposed for sharing data in untrusted environments and also implemented in various libraries such OpenABE \cite{openabe}.
+It was found no work that applies it to the interaction between a user and an AI agent.
+Homomorphic encryption and TEEs, discussed above, protect specifically the \emph{computation}, but not the choice of what is "released" to a third-party model.
+
+\begin{table}[htbp]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    \textbf{Approach} & \textbf{Per-section} & \textbf{User + agent} & \textbf{Policy bound} & \textbf{Vendor-} \\
+     & \textbf{granularity} & \textbf{identity} & \textbf{to data} & \textbf{agnostic} \\
+    \midrule
+    Action constraints (CaMeL, \dots) & no  & no  & no  & yes \\
+    ACL/ABAC in the MCP server        & yes & partly & no  & yes \\
+    Confidential inference (TEE)      & no  & no  & no  & no  \\
+    PABEL                             & yes & yes & yes & yes \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Positioning of PABEL with respect to related approaches.}\label{tab:related}
+\end{table}
 
 \subsection{Actors and Goals}
 In this section we define the actors involved in the system and their goals, to better understand the problem we are trying to solve.

@@ -126,3 +126,7 @@ Other limitations that belong to the design are:
   \item Only the harness is identified, never the model and the enforcement operates at the application level.
   \item A policy that does not name an agent is satisfied by any recognised installation.
 \end{itemize}
+
+\paragraph{Note on Metadata leakage:}
+The \code{.abe} file exposes the number of sections, the policies of each group and which sections share a policy. This, indeed, was taken in account but deliberately left as a design choice, since, even if an attacker holding the file could learn the \emph{structure} of the document and the attributes used in the policies to protect it, they would not be able to read the content unless of being able to break the cryptographic security.
+
