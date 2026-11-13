@@ -14,6 +14,7 @@ Before presenting the observed results, we present to the reader how the system 
 
 All of the tests are run in a single machine that host multiple containers for the server-side components and multiple client installation for each agent on said machine.
 Claude Code and OpenCode are the most used agents, but we mention also Codex and Copilot as alternatives tried in some tests.
+The timings of Section \ref{sec:eval-perf} were measured on a laptop with an Intel Core Ultra 7 265U and 31~GB of RAM, running Windows 11 and Python 3.14.10 in a virtual environment outside OneDrive; OpenABE is the fork of Section \ref{sec:openabe}.
 
 Documents were built purposely with ABEditor (see Section \ref{ABEditor}), which also provides the expected outcome for each section.
 It is also important to note that we have used fictitious users defined with their own attributes as following:
@@ -103,6 +104,33 @@ Reads recorded during development (Table \ref{tab:eval-audit}) show the same pat
 \end{table}
 
 
+\subsubsection{Documents with many policies}
+To check policies richer than those of the matrix, three documents of 8, 20 and 40 sections, protected with 6, 10 and 16 distinct policies, were encrypted with OpenABE.
+The policies combine \code{and} and \code{or} with nesting and agent attributes and include one that no key can satisfy and one that needs the attributes of two different users.
+Each document was opened with the key of each of the six user--agent pairs, built as PABEL does; the expected outcome comes from an evaluator of policies written independently of OpenABE, and a section counts as read only if the decryption succeeds and returns the original text.
+All 408 section checks (192 decryptions) match (Table \ref{tab:eval-policies}).
+This exercises the cryptographic enforcement and the policy semantics, not the hook, Keycloak or the merge of attributes done by the server.
+
+\begin{table}[H]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}llccc@{}}
+    \toprule
+    \textbf{User} & \textbf{Agent} & \textbf{8 sections} & \textbf{20 sections} & \textbf{40 sections} \\
+     & & \textbf{(6 policies)} & \textbf{(10 policies)} & \textbf{(16 policies)} \\
+    \midrule
+    alice   & Claude Code & 6/8 & 8/20  & 18/40 \\
+    alice   & opencode    & 6/8 & 10/20 & 18/40 \\
+    bob     & Claude Code & 2/8 & 8/20  & 13/40 \\
+    bob     & opencode    & 1/8 & 8/20  & 12/40 \\
+    charlie & Claude Code & 3/8 & 10/20 & 16/40 \\
+    charlie & opencode    & 4/8 & 12/20 & 21/40 \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Readable sections on documents with many policies; expected and observed values coincide.}\label{tab:eval-policies}
+\end{table}
+
 \subsection{Security Tests}
 The scenarios of Table \ref{tab:eval-security} were run through the real entry point of the hook, without a server and with fake credentials, so they test the interception and not the server.
 Since they were written together with the rules, they are regression tests more than indepentent evidence. For this reason, the same attacks were repeated in a different way (Table \ref{tab:eval-probes}).
@@ -176,22 +204,105 @@ These gaps do not expose protected documents, which remain ciphertext, nor allow
   \caption{Coverage by agent (classes in Section \ref{Two Classes of Agents}). The server applies the same checks to every agent, only the interception depends on the hooks of the harness. Server-side figures come from Table \ref{tab:eval-audit}.}\label{tab:eval-coverage}
 \end{table}
 
-\subsection{Performance}
+\subsection{Performance}\label{sec:eval-perf}
 
 \subsubsection{Format versions}
 The extreme amount of time spent decrypting a \code{.abe} document v1 was easily identifiable as a consequence of the naive approached used.
-By structuring the document with a new version, aware of the prior result, the decryption time was reduced significantly, as show in the following diagram \ref{fig:eval-versions}.
+By structuring the document with a new version, aware of the prior result, the decryption time was reduced significantly, as show in the following graph \ref{fig:eval-versions}.
+At 39 sections the whole document takes 89~s with v1 and 6.9~s with v2, about 13 times less; the cost is proportional to the number of \code{oabe\_dec} calls (about 2.1~s each), which is the number of sections for v1 and of distinct policies for v2.
 
-\begin{tikzpicture}
-  \begin{axis}[xbar, xlabel={ms (median, bar to p95)}, symbolic y coords={Interpreter,Code loading,Hook allow,Hook deny},
-    ytick=data, y dir=reverse, width=0.85\textwidth, height=5cm, nodes near coords, xmin=0, enlarge y limits=0.2]
-  \addplot+[error bars/.cd, x dir=plus, x explicit] coordinates {(115.0,Interpreter) +- (8.9,0) (1306.7,Code loading) +- (80.2,0)
-                        (1312.3,Hook allow) +- (67.8,0) (1322.4,Hook deny) +- (96.0,0)};
-  \end{axis}
-\end{tikzpicture}
+\definecolor{cVone}{HTML}{D55E00}
+\definecolor{cVtwo}{HTML}{0072B2}
+\definecolor{cInt}{HTML}{009E73}
+\definecolor{cLoad}{HTML}{E69F00}
+\definecolor{cAllow}{HTML}{56B4E9}
+\definecolor{cDeny}{HTML}{CC79A7}
+
+\begin{chart}[H]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+        name=left, width=0.45\textwidth, height=5.2cm,
+        title={(a) By sections},
+        title style={font=\small},
+        xlabel={Sections $N$ (3 distinct policies)},
+        ylabel={Time (s)},
+        xmin=0, xmax=62, ymin=0, ymax=135, xtick={0,20,40,60}, ytick={0,40,80,120},
+        grid=both, grid style={line width=.1pt, draw=gray!30},
+        legend pos=north west, legend cell align=left, legend style={font=\scriptsize},
+        label style={font=\footnotesize}, tick label style={font=\footnotesize},
+      ]
+      \fill[gray!15] (axis cs:39.5,0) rectangle (axis cs:62,135);
+      \node[font=\scriptsize, text=gray!60!black, anchor=north east] at (axis cs:61,133) {projection};
+      \addplot[domain=0:39, samples=2, very thick, dashed, cVone, forget plot] {2.115*x};
+      \addplot[domain=39:62, samples=2, very thick, dotted, cVone, forget plot] {2.115*x};
+      \addplot[domain=0:39, samples=2, very thick, dashed, cVtwo, forget plot] {6.346};
+      \addplot[domain=39:62, samples=2, very thick, dotted, cVtwo, forget plot] {6.346};
+      \addplot[only marks, mark=square*, mark size=3pt, mark options={draw=cVone, fill=cVone}, color=cVone,
+                error bars/.cd, y dir=both, y explicit, error bar style={cVone}, error mark options={cVone, mark size=2pt}]
+        table[row sep=\\, x=n, y=m, y error plus=up, y error minus=dn] {
+        n m up dn \\
+        3 6.49 1.98 1.04 \\
+        10 22.74 0.87 1.80 \\
+        20 38.74 4.94 1.44 \\
+        30 56.69 0.57 0.36 \\
+        39 89.07 1.87 14.38 \\
+      };
+      \addlegendentry{v1}
+      \addplot[only marks, mark=*, mark size=3pt, mark options={draw=cVtwo, fill=cVtwo}, color=cVtwo,
+                error bars/.cd, y dir=both, y explicit, error bar style={cVtwo}, error mark options={cVtwo, mark size=2pt}]
+        table[row sep=\\, x=n, y=m, y error plus=up, y error minus=dn] {
+        n m up dn \\
+        3 6.67 0.44 0.24 \\
+        10 6.76 0.44 0.59 \\
+        20 5.80 0.87 0.24 \\
+        30 5.69 0.44 0.09 \\
+        39 6.85 0.17 1.19 \\
+      };
+      \addlegendentry{v2}
+    \end{axis}
+    \begin{axis}[
+        at={(left.south east)}, xshift=1.1cm, width=0.45\textwidth, height=5.2cm,
+        title={(b) By policies},
+        title style={font=\small},
+        xlabel={Distinct policies $G$ (log scale)},
+        xmode=log, xmin=0.8, xmax=70, ymin=0, ymax=135, xtick={1,2,5,10,20,40,60},
+        xticklabels={1,2,5,10,20,40,60}, xminorticks=false, ytick={0,40,80,120},
+        grid=both, grid style={line width=.1pt, draw=gray!30},
+        label style={font=\footnotesize}, tick label style={font=\footnotesize},
+      ]
+      \fill[gray!15] (axis cs:10.5,0) rectangle (axis cs:70,135);
+      \node[font=\scriptsize, text=gray!60!black, anchor=south east] at (axis cs:68,3) {projection};
+      \addplot[domain=0.8:10, samples=40, very thick, dashed, cVtwo] {2.115*x};
+      \addplot[domain=10:60, samples=60, very thick, dotted, cVtwo] {2.115*x};
+      \addplot[domain=0.8:70, samples=2, very thick, dashed, cVone] {2.115*20};
+\addplot[domain=0.8:70, samples=2, very thick, dashed, cVone] {2.115*40};
+\addplot[domain=0.8:70, samples=2, very thick, dashed, cVone] {2.115*60};
+\draw[black, thick] (axis cs:20,42.3) circle (4pt);
+\draw[black, thick] (axis cs:40,84.6) circle (4pt);
+\draw[black, thick] (axis cs:60,126.9) circle (4pt);
+\node[anchor=south west, font=\scriptsize, text=cVone] at (axis cs:1,44.5) {v1, $N=20$};
+\node[anchor=south west, font=\scriptsize, text=cVone] at (axis cs:1,86.5) {v1, $N=40$};
+\node[anchor=north west, font=\scriptsize, text=cVone] at (axis cs:1,125) {v1, $N=60$};
+      \node[anchor=south west, font=\scriptsize, text=cVtwo] at (axis cs:2.4,16) {v2};
+      \addplot[only marks, mark=*, mark size=3pt, mark options={draw=cVtwo, fill=cVtwo}, color=cVtwo,
+                error bars/.cd, y dir=both, y explicit, error bar style={cVtwo}, error mark options={cVtwo, mark size=2pt}]
+        table[row sep=\\, x=n, y=m, y error plus=up, y error minus=dn] {
+        n m up dn \\
+        1 2.33 0.06 0.04 \\
+        2 4.69 0.07 0.32 \\
+        3 6.11 0.85 0.28 \\
+        5 10.49 0.83 1.12 \\
+        10 21.32 0.71 1.06 \\
+      };
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Decryption time of a \code{.abe} document: (a)~v1 and v2 against the number of sections; (b)~v2 against the number of policies (log $x$ axis), with v1 for three document sizes (circles: $G=N$). Median of 6 runs, whiskers show minimum and maximum; dashed lines: $2.12\,\mathrm{s}$ per \code{oabe\_dec} call; dotted lines are projections.}\label{fig:eval-versions}
+\end{chart}
+
 
 \subsubsection{Latency of a protected read}
-We measured the time between the interception of a read and the answer returned to the agent on documents of 3 and 39 (4 and 40, counting also the public section), with 30 runs each.
+We measured the time between the interception of a read and the answer returned to the agent on documents of 3 and 39 (4 and 40, counting also the public section which needs no decryption), with 30 runs each.
 The following table \ref{tab:eval-latency} describes the results.
 
 \begin{table}[H]
@@ -211,6 +322,34 @@ The following table \ref{tab:eval-latency} describes the results.
   \caption{Latency of a protected read.}\label{tab:eval-latency}
 \end{table}
 \subsubsection{Cost of the hook}
+The hook is a new process for every tool call and adds about 0.8~s to each of them, almost all spent loading the modules; the decision itself takes 0.020~ms.
+
+\begin{chart}[H]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+        xbar, bar shift=0pt, bar width=9pt, width=0.75\textwidth, height=3.6cm,
+        xlabel={Wall-clock time of the whole process (ms)},
+        symbolic y coords={Interpreter,Code loading,Hook allow,Hook deny},
+        ytick={Interpreter,Code loading,Hook allow,Hook deny}, y dir=reverse, xmin=0, xmax=1600, enlarge y limits=0.2,
+        nodes near coords, nodes near coords align={horizontal},
+        every node near coord/.append style={anchor=east, xshift=-3pt, black, font=\small\bfseries,
+          /pgf/number format/fixed, /pgf/number format/precision=0, /pgf/number format/1000 sep={}},
+        grid=major, grid style={line width=.1pt, draw=gray!30},
+        label style={font=\footnotesize}, tick label style={font=\footnotesize},
+      ]
+      \addplot+[draw=cInt, fill=cInt, every node near coord/.append style={anchor=west, xshift=9pt, black}, error bars/.cd, x dir=plus, x explicit, error bar style={black}, error mark options={black}]
+        coordinates {(103.5,Interpreter) +- (22.5,0)};
+      \addplot+[draw=cLoad, fill=cLoad, error bars/.cd, x dir=plus, x explicit, error bar style={black}, error mark options={black}]
+        coordinates {(918.2,Code loading) +- (160.2,0)};
+      \addplot+[draw=cAllow, fill=cAllow, error bars/.cd, x dir=plus, x explicit, error bar style={black}, error mark options={black}]
+        coordinates {(908.4,Hook allow) +- (309.0,0)};
+      \addplot+[draw=cDeny, fill=cDeny, error bars/.cd, x dir=plus, x explicit, error bar style={black}, error mark options={black}]
+        coordinates {(934.8,Hook deny) +- (498.4,0)};
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Cost of the hook on a call that does not touch a protected document. Median of 60 runs, whiskers up to the 95th percentile.}\label{fig:eval-hook}
+\end{chart}
 
 % ---------------------------------------------------------------- performance
 \begin{table}[H]
@@ -220,16 +359,16 @@ The following table \ref{tab:eval-latency} describes the results.
     \toprule
     \textbf{Measure} & \textbf{Median (ms)} & \textbf{p95 (ms)} & \textbf{Runs} \\
     \midrule
-    Python interpreter (\code{python -c pass})                 & 115  & 124  & 30 \\
-    Loading the hook code                                       & 1307 & 1387 & 30 \\
-    Hook on an unrelated call (\emph{allow})                    & 1312 & 1380 & 30 \\
-    Hook on a local denial (\emph{deny})\textsuperscript{a}     & 1322 & 1418 & 30 \\
+    Python interpreter (\code{python -c pass})                 & 104  & 126  & 60 \\
+    Loading the hook code                                       & 918  & 1078 & 60 \\
+    Hook on an unrelated call (\emph{allow})                    & 908  & 1217 & 60 \\
+    Hook on a local denial (\emph{deny})\textsuperscript{a}     & 935  & 1433 & 60 \\
     \midrule
-    Decision alone, in-process                                  & \multicolumn{3}{l}{0.038 ms per call (2000 iterations)} \\
+    Decision alone, in-process                                  & \multicolumn{3}{l}{0.020 ms per call (2000 iterations)} \\
     \bottomrule
   \end{tabular}
   \endgroup
-  \caption{Cost of the hook, as wall-clock time of the whole process (3 warm-up runs discarded, measures interleaved). Loading the modules accounts for about 1.19 s: \code{mcp} alone takes 710 ms out of 1097 ms with \code{-X importtime}. \textsuperscript{a}Without the round trip to the server, capped at 3 s. The virtual environment sits inside OneDrive, so the absolute values depend on the machine.}\label{tab:eval-hook}
+  \caption{Cost of the hook, as wall-clock time of the whole process (3 warm-up runs discarded, runs interleaved). \textsuperscript{a}Without the round trip to the server, capped at 3~s.}\label{tab:eval-hook}
 \end{table}
 
 \subsection{Deployment on Two Machines}
@@ -255,6 +394,7 @@ Each user obtains only the regions its pair can read and the others appear as \c
     \midrule
     Automated tests (connector and server)      & 258 & 257 pass, 1 skipped \\
     Functional matrix (user--agent pairs)       & 3   & 3 pass \\
+    Documents with many policies (section checks) & 408 & 408 pass \\
     Security scenarios (baseline)               & 27  & 27 pass \\
     Security scenarios (probes)                 & 8   & 0 blocked \\
     \bottomrule
