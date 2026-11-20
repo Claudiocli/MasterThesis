@@ -15,6 +15,7 @@ Before presenting the observed results, we present to the reader how the system 
 All of the tests are run in a single machine that host multiple containers for the server-side components and multiple client installation for each agent on said machine.
 Claude Code and OpenCode are the most used agents, but we mention also Codex and Copilot as alternatives tried in some tests.
 The timings of Section \ref{sec:eval-perf} were measured on a laptop with an Intel Core Ultra 7 265U and 31~GB of RAM, running Windows 11 and Python 3.14.10 in a virtual environment outside OneDrive; OpenABE is the fork of Section \ref{sec:openabe}.
+The containers run on Rancher Desktop (containerd, without Kubernetes) and the decryption timings are taken inside the server container (Ubuntu 24.04, OpenABE built for Linux, 14 logical processors visible), since that is where the server decrypts.
 
 Documents were built purposely with ABEditor (see Section \ref{ABEditor}), which also provides the expected outcome for each section.
 It is also important to note that we have used fictitious users defined with their own attributes as following:
@@ -79,6 +80,32 @@ Reads recorded during development (Table \ref{tab:eval-audit}) show the same pat
   \end{tabular}
   \endgroup
   \caption{Readable sections per user--agent pair on a purpose-built document of three sections: outcome expected from the policies and outcome observed through PABEL.}\label{tab:eval-matrix}
+\end{table}
+
+The matrix was then repeated on the complete deployment (Keycloak, PostgreSQL and server in containers) for all six user--agent pairs and on three documents: the sales report and the NEXORA dossier of the demo, and a synthetic document with one public section and three protected ones.
+Every pair opened every document through the real entry point of the hook, a new process each time, so that the request went through the relay, the verification of the two tokens and the decryption of the server.
+For each read, the sections released were compared one by one, not only counted, with those expected from an evaluator that reads the policy written in the document and checks it against the attributes of the pair, without using OpenABE.
+All 18 reads match (Table \ref{tab:eval-matrix-full}); the matrix was run on two different days and the sections released were the same.
+Two differences from the use with a real agent must be stated: the agent is replaced by the JSON that the harness sends to the hook, and the token of the user comes from the password grant of Keycloak instead of the interactive login with TOTP; the server verifies a genuine token in both cases.
+The values of Table \ref{tab:eval-audit} were recorded during development and are not comparable with this controlled run.
+
+\begin{table}[H]
+  \centering
+  \begingroup\linespread{1.0}\small
+  \begin{tabular}{@{}llccc@{}}
+    \toprule
+    \textbf{User} & \textbf{Agent} & \textbf{Sales report} & \textbf{Dossier} & \textbf{Synthetic} \\
+    \midrule
+    alice   & Claude Code & 1/3 & 17/39 & 4/4 \\
+    alice   & opencode    & 1/3 & 14/39 & 1/4 \\
+    bob     & Claude Code & 2/3 & 10/39 & 1/4 \\
+    bob     & opencode    & 2/3 & 4/39  & 1/4 \\
+    charlie & Claude Code & 1/3 & 1/39  & 1/4 \\
+    charlie & opencode    & 1/3 & 18/39 & 1/4 \\
+    \bottomrule
+  \end{tabular}
+  \endgroup
+  \caption{Readable sections for the six user--agent pairs on three documents, through the complete deployment. Expected and observed sections coincide in all 18 reads. Charlie has no role for Claude Code, so he gets no agent attributes with that agent.}\label{tab:eval-matrix-full}
 \end{table}
 
 % ---------------------------------------------------------------- audit
@@ -185,7 +212,7 @@ These gaps do not expose protected documents, which remain ciphertext, nor allow
 \end{table}
 
 
-\subsection{Agent Coverage}
+\subsection{Agent Coverage}\label{sec:eval-coverage}
 
 \begin{table}[H]
   \centering
@@ -206,10 +233,14 @@ These gaps do not expose protected documents, which remain ciphertext, nor allow
 
 \subsection{Performance}\label{sec:eval-perf}
 
-\subsubsection{Format versions}
-The extreme amount of time spent decrypting a \code{.abe} document v1 was easily identifiable as a consequence of the naive approached used.
-By structuring the document with a new version, aware of the prior result, the decryption time was reduced significantly, as show in the following graph \ref{fig:eval-versions}.
-At 39 sections the whole document takes 89~s with v1 and 6.9~s with v2, about 13 times less; the cost is proportional to the number of \code{oabe\_dec} calls (about 2.1~s each), which is the number of sections for v1 and of distinct policies for v2.
+\subsubsection{Format versions}\label{sec:eval-formats}
+A document in the first version of the format (v1) holds one ciphertext per section, so the server calls \code{oabe\_dec} once for every section.
+The second version (v2) holds one ciphertext per distinct policy, so the number of calls no longer grows with the length of the document, as shown in the following graph \ref{fig:eval-versions}.
+The times were measured inside the server container on documents whose sections are 1000 characters long, with 60 runs for each document and checking that every section is decrypted to its original text.
+With 39 sections the whole document takes 132~ms with v1 and 25~ms with v2, about 5 times less; with 60 sections 200~ms against 27~ms, 7.5 times less.
+These are the times of the server as deployed, which decrypts the groups in parallel; one group after the other (dashed lines) the same documents take 778 and 60~ms (13 times less) with 39 sections and 1254 and 63~ms (20 times less) with 60.
+In this case the cost is proportional to the number of \code{oabe\_dec} calls (about 21~ms each), which is the number of sections for v1 and of distinct policies for v2, and a v2 document in which every section has its own policy costs as much as one in v1.
+In absolute terms the saving is small (about 0.1~s with 39 sections, against the 1.2~s of the whole protected read of Table \ref{tab:eval-latency}), and it grows with the number of sections.
 
 \definecolor{cVone}{HTML}{D55E00}
 \definecolor{cVtwo}{HTML}{0072B2}
@@ -222,105 +253,124 @@ At 39 sections the whole document takes 89~s with v1 and 6.9~s with v2, about 13
   \centering
   \begin{tikzpicture}
     \begin{axis}[
-        name=left, width=0.45\textwidth, height=5.2cm,
+        name=left, width=0.45\textwidth, height=6cm,
         title={(a) By sections},
         title style={font=\small},
-        xlabel={Sections $N$ (3 distinct policies)},
-        ylabel={Time (s)},
-        xmin=0, xmax=62, ymin=0, ymax=135, xtick={0,20,40,60}, ytick={0,40,80,120},
+        xlabel={Sections $N$ (3 distinct policies in v2)},
+        ylabel={Time (ms)},
+        xmin=0, xmax=64, ymin=0, ymax=1300, xtick={0,20,40,60}, ytick={0,400,800,1200},
         grid=both, grid style={line width=.1pt, draw=gray!30},
         legend pos=north west, legend cell align=left, legend style={font=\scriptsize},
         label style={font=\footnotesize}, tick label style={font=\footnotesize},
       ]
-      \fill[gray!15] (axis cs:39.5,0) rectangle (axis cs:62,135);
-      \node[font=\scriptsize, text=gray!60!black, anchor=north east] at (axis cs:61,133) {projection};
-      \addplot[domain=0:39, samples=2, very thick, dashed, cVone, forget plot] {2.115*x};
-      \addplot[domain=39:62, samples=2, very thick, dotted, cVone, forget plot] {2.115*x};
-      \addplot[domain=0:39, samples=2, very thick, dashed, cVtwo, forget plot] {6.346};
-      \addplot[domain=39:62, samples=2, very thick, dotted, cVtwo, forget plot] {6.346};
-      \addplot[only marks, mark=square*, mark size=3pt, mark options={draw=cVone, fill=cVone}, color=cVone,
+      \addplot[thick, dashed, cVone, forget plot] table[row sep=\\, x=n, y=m] {
+        n m \\
+        3 57.3 \\
+        10 223.9 \\
+        20 400.6 \\
+        30 599.8 \\
+        39 778.2 \\
+        60 1253.7 \\
+      };
+      \addplot[thick, dashed, cVtwo, forget plot] table[row sep=\\, x=n, y=m] {
+        n m \\
+        3 58.7 \\
+        10 62.3 \\
+        20 60.1 \\
+        30 61.4 \\
+        39 60.3 \\
+        60 62.8 \\
+      };
+      \addplot[mark=square*, mark size=2.6pt, thick, mark options={draw=cVone, fill=cVone}, color=cVone,
                 error bars/.cd, y dir=both, y explicit, error bar style={cVone}, error mark options={cVone, mark size=2pt}]
         table[row sep=\\, x=n, y=m, y error plus=up, y error minus=dn] {
         n m up dn \\
-        3 6.49 1.98 1.04 \\
-        10 22.74 0.87 1.80 \\
-        20 38.74 4.94 1.44 \\
-        30 56.69 0.57 0.36 \\
-        39 89.07 1.87 14.38 \\
+        3 24.5 6.0 3.7 \\
+        10 55.8 47.4 15.7 \\
+        20 79.3 26.1 10.8 \\
+        30 106.1 38.8 15.0 \\
+        39 132.4 58.7 19.2 \\
+        60 200.3 81.3 34.0 \\
       };
       \addlegendentry{v1}
-      \addplot[only marks, mark=*, mark size=3pt, mark options={draw=cVtwo, fill=cVtwo}, color=cVtwo,
+      \addplot[mark=*, mark size=2.6pt, thick, mark options={draw=cVtwo, fill=cVtwo}, color=cVtwo,
                 error bars/.cd, y dir=both, y explicit, error bar style={cVtwo}, error mark options={cVtwo, mark size=2pt}]
         table[row sep=\\, x=n, y=m, y error plus=up, y error minus=dn] {
         n m up dn \\
-        3 6.67 0.44 0.24 \\
-        10 6.76 0.44 0.59 \\
-        20 5.80 0.87 0.24 \\
-        30 5.69 0.44 0.09 \\
-        39 6.85 0.17 1.19 \\
+        3 25.3 3.2 3.1 \\
+        10 26.4 6.5 3.3 \\
+        20 26.0 3.0 3.1 \\
+        30 26.0 2.3 2.7 \\
+        39 25.0 2.8 1.9 \\
+        60 26.6 4.4 5.0 \\
       };
       \addlegendentry{v2}
     \end{axis}
     \begin{axis}[
-        at={(left.south east)}, xshift=1.1cm, width=0.45\textwidth, height=5.2cm,
-        title={(b) By policies},
+        at={(left.south east)}, xshift=1.1cm, width=0.45\textwidth, height=6cm,
+        title={(b) By policies ($N=60$)},
         title style={font=\small},
         xlabel={Distinct policies $G$ (log scale)},
-        xmode=log, xmin=0.8, xmax=70, ymin=0, ymax=135, xtick={1,2,5,10,20,40,60},
-        xticklabels={1,2,5,10,20,40,60}, xminorticks=false, ytick={0,40,80,120},
+        xmode=log, xmin=0.8, xmax=75, ymin=0, ymax=1300, xtick={1,2,5,10,20,60},
+        xticklabels={1,2,5,10,20,60}, xminorticks=false, ytick={0,400,800,1200},
         grid=both, grid style={line width=.1pt, draw=gray!30},
         label style={font=\footnotesize}, tick label style={font=\footnotesize},
       ]
-      \fill[gray!15] (axis cs:10.5,0) rectangle (axis cs:70,135);
-      \node[font=\scriptsize, text=gray!60!black, anchor=south east] at (axis cs:68,3) {projection};
-      \addplot[domain=0.8:10, samples=40, very thick, dashed, cVtwo] {2.115*x};
-      \addplot[domain=10:60, samples=60, very thick, dotted, cVtwo] {2.115*x};
-      \addplot[domain=0.8:70, samples=2, very thick, dashed, cVone] {2.115*20};
-\addplot[domain=0.8:70, samples=2, very thick, dashed, cVone] {2.115*40};
-\addplot[domain=0.8:70, samples=2, very thick, dashed, cVone] {2.115*60};
-\draw[black, thick] (axis cs:20,42.3) circle (4pt);
-\draw[black, thick] (axis cs:40,84.6) circle (4pt);
-\draw[black, thick] (axis cs:60,126.9) circle (4pt);
-\node[anchor=south west, font=\scriptsize, text=cVone] at (axis cs:1,44.5) {v1, $N=20$};
-\node[anchor=south west, font=\scriptsize, text=cVone] at (axis cs:1,86.5) {v1, $N=40$};
-\node[anchor=north west, font=\scriptsize, text=cVone] at (axis cs:1,125) {v1, $N=60$};
-      \node[anchor=south west, font=\scriptsize, text=cVtwo] at (axis cs:2.4,16) {v2};
-      \addplot[only marks, mark=*, mark size=3pt, mark options={draw=cVtwo, fill=cVtwo}, color=cVtwo,
+      \addplot[thick, dashed, cVtwo, forget plot] table[row sep=\\, x=n, y=m] {
+        n m \\
+        1 21.7 \\
+        2 41.4 \\
+        3 60.2 \\
+        5 98.0 \\
+        10 205.3 \\
+        20 424.4 \\
+        30 640.7 \\
+        60 1226.9 \\
+      };
+      \addplot[mark=*, mark size=2.6pt, thick, mark options={draw=cVtwo, fill=cVtwo}, color=cVtwo,
                 error bars/.cd, y dir=both, y explicit, error bar style={cVtwo}, error mark options={cVtwo, mark size=2pt}]
         table[row sep=\\, x=n, y=m, y error plus=up, y error minus=dn] {
         n m up dn \\
-        1 2.33 0.06 0.04 \\
-        2 4.69 0.07 0.32 \\
-        3 6.11 0.85 0.28 \\
-        5 10.49 0.83 1.12 \\
-        10 21.32 0.71 1.06 \\
+        1 22.6 4.2 4.5 \\
+        2 22.8 15.4 4.6 \\
+        3 26.6 6.0 4.3 \\
+        5 30.4 11.2 3.7 \\
+        10 47.9 16.6 10.2 \\
+        20 85.1 31.2 19.6 \\
+        30 115.6 131.9 25.1 \\
+        60 208.8 98.7 48.9 \\
       };
+      \node[anchor=north west, font=\scriptsize, text=cVone, align=left] at (axis cs:0.9,1260) {last point: $G=N$,\\same as v1};
     \end{axis}
   \end{tikzpicture}
-  \caption{Decryption time of a \code{.abe} document: (a)~v1 and v2 against the number of sections; (b)~v2 against the number of policies (log $x$ axis), with v1 for three document sizes (circles: $G=N$). Median of 6 runs, whiskers show minimum and maximum; dashed lines: $2.12\,\mathrm{s}$ per \code{oabe\_dec} call; dotted lines are projections.}\label{fig:eval-versions}
+  \caption{Decryption time of a \code{.abe} document on the server, timed inside the container (60 runs per document; markers show the median, whiskers the minimum and the 95th percentile): (a)~v1 and v2 against the number of sections; (b)~v2 against the number of distinct policies (log $x$ axis) for a document of 60 sections, where the last point has one policy per section, as in v1. Solid lines: the server decrypts the groups in parallel, as deployed; dashed lines: the same groups decrypted one after the other, proportional to the number of \code{oabe\_dec} calls.}\label{fig:eval-versions}
 \end{chart}
 
 
 \subsubsection{Latency of a protected read}
-We measured the time between the interception of a read and the answer returned to the agent on documents of 3 and 39 (4 and 40, counting also the public section which needs no decryption), with 30 runs each.
+We measured the time between the interception of a read and the answer returned to the agent on documents of 3 and 39 sections (4 and 40, counting also the public section which needs no decryption), both protected with 3 distinct policies, with 30 runs each after 3 warm-up runs.
+Each run starts a new hook process, exactly as the agent does, and goes through the relay, Keycloak, the server and PostgreSQL; the whole stack was running on the same laptop.
 The following table \ref{tab:eval-latency} describes the results.
 
 \begin{table}[H]
   \centering\small
   \begin{tabular}{@{}lrr@{}}
     \toprule
-    \textbf{Phase} & \textbf{3 sections (ms)} & \textbf{39 sections (ms)} \\
+    \textbf{Phase (median)} & \textbf{3 sections (ms)} & \textbf{39 sections (ms)} \\
     \midrule
-    Hook start-up and detection & \todo{} & \todo{} \\
-    Token verification and key lookup & \todo{} & \todo{} \\
-    ABE decryption (per group)  & \todo{} & \todo{} \\
-    Network and serialization   & \todo{} & \todo{} \\
+    Hook start-up and detection & 916 & 916 \\
+    Token verification and key lookup & 110 & 110 \\
+    ABE decryption (3 groups, in parallel) & 24 & 25 \\
+    Parsing, serialization and transfer & 3 & 34 \\
     \midrule
-    \textbf{Total (median / p95)} & \todo{} & \todo{} \\
+    \textbf{Total (median / p95)} & \textbf{1115 / 1340} & \textbf{1155 / 1387} \\
     \bottomrule
   \end{tabular}
-  \caption{Latency of a protected read.}\label{tab:eval-latency}
+  \caption{Latency of a protected read, with the whole stack running on the laptop. The hook start-up is the whole hook process on a call that is not protected; the verification of the two tokens and the key lookup are the round trip of the \code{whoami} call of the relay, network included; the decryption is that of the server code, timed inside the container; parsing, serialization and transfer are the remainder of a \code{read\_document} call. Every row is the median of a separate series of 30 runs, so rows do not add up exactly to the total.}\label{tab:eval-latency}
 \end{table}
+The decryption takes about 2\% of the total and grows by less than 1~ms from 3 to 39 sections, because the sections that share a policy are in the same ciphertext (Section \ref{sec:eval-formats}) and the groups are decrypted in parallel.
+About 80\% of the time is the start-up of the hook, which is a new Python process for every tool call (next subsection), and the round trip to the server accounts for about 110~ms.
+The series was repeated on another day, with the laptop busier: every phase was slower (1541 and 1633~ms in total, 1306~ms for the start-up of the hook and 189~ms for the round trip) but the start-up of the hook dominated in the same way and the decryption stayed below 50~ms, so the absolute values depend on the load of the machine more than the proportions do.
 \subsubsection{Cost of the hook}
 The hook is a new process for every tool call and adds about 0.8~s to each of them, almost all spent loading the modules; the decision itself takes 0.020~ms.
 
@@ -378,9 +428,35 @@ We repeated the matrix of Table \ref{tab:eval-matrix} and the latency measure of
 
 \subsection{Case Study: Nexora Demo}\label{sec:eval-nexora}
 To show the whole flow on a realistic document we have used \emph{NEXORA Company Dossier}, that is a fictitious PDF generated by AI in which multiple regions were protected with different policies such as "(security or risk) and (agent\_claude\_code or agent\_opencode)".
-Figure \ref{fig:nexora} shows the same page as seen by alice through Claude Code, Bob through Claude Code and Charlie through OpenCode.
-% figure
-Each user obtains only the regions its pair can read and the others appear as \code{ACCESS DENIED}.
+The following images show two pages of the dossier, its index, as seen by alice through Claude Code, Bob through Claude Code and Charlie through OpenCode: first the three views of page 2 and then the three views of page 3.
+Each image keeps the position of the content on the page, so the regions that were not returned appear as empty space. Under each image are the user, the agent and the attributes of the pair. The attributes printed in blue in the dossier are those recommended by its author; the policies actually applied are the ones named in the text.
+
+\begin{center}
+  \includegraphics[width=0.72\textwidth]{media/image/nexora_p2_alice.pdf}\par\medskip
+  \includegraphics[width=0.72\textwidth]{media/image/nexora_p2_bob.pdf}\par\medskip
+  \includegraphics[width=0.72\textwidth]{media/image/nexora_p2_charlie.pdf}
+\end{center}
+
+On page 2 alice receives only part I, Bob parts I and II and Charlie parts I and III (the title and the introduction of the page, identical for all, are left out).
+Part I is for all the staff and everybody receives it.
+Part II requires \code{manager} or \code{hr} together with Claude Code or Codex CLI, so only Bob reads it.
+Part III requires \code{dev} or \code{manager} together with one of the listed agents, among them OpenCode, which Charlie satisfies as a developer.
+Alice holds none of these attributes, and the regions that were not returned leave an empty space in the page.
+
+\begin{center}
+  \includegraphics[width=0.77\textwidth]{media/image/nexora_p3_alice.pdf}\par\medskip
+  \includegraphics[width=0.77\textwidth]{media/image/nexora_p3_bob.pdf}\par\medskip
+  \includegraphics[width=0.77\textwidth]{media/image/nexora_p3_charlie.pdf}
+\end{center}
+
+Page 3 continues the index; in the three images only the vertical band that is empty for all of them has been shortened.
+Alice receives parts VIII and IX, Bob part V and Charlie part IX.
+Part V requires \code{marketing} or \code{manager} together with Claude Code or Copilot, which only Bob satisfies.
+Part IX requires \code{security}, \code{dev} or \code{manager} together with Claude Code, Codex CLI or OpenCode: alice satisfies it as a security user through Claude Code and Charlie as a developer through OpenCode.
+Part VIII requires \code{legal} or \code{executive} and \code{agent\_claude\_code}: alice and Charlie both hold \code{executive}, but only alice uses Claude Code, so Charlie does not receive it.
+This is the condition on both the user and the agent that PABEL enforces.
+
+Each user obtains only the regions its pair can read: in the recomposed PDF the others leave an empty space, and in the textual result they are marked with \code{[ACCESS DENIED]}.
 
 \subsection{Summary of the Results}
 
@@ -394,6 +470,7 @@ Each user obtains only the regions its pair can read and the others appear as \c
     \midrule
     Automated tests (connector and server)      & 258 & 257 pass, 1 skipped \\
     Functional matrix (user--agent pairs)       & 3   & 3 pass \\
+    Functional matrix, complete deployment (6 pairs, 3 documents) & 18  & 18 pass \\
     Documents with many policies (section checks) & 408 & 408 pass \\
     Security scenarios (baseline)               & 27  & 27 pass \\
     Security scenarios (probes)                 & 8   & 0 blocked \\

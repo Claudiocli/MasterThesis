@@ -333,3 +333,8 @@ TSWLatexianTemp*
 # Axet stuff that keeps spawning
 .graphifyignore
 .graphify/
+# graphify-axet
+.graphify/
+
+# Test results (local measurements)
+test-results/
