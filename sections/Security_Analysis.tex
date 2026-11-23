@@ -1,4 +1,4 @@
-Will follow an in depth analysis of each threat previously mentioned in the threat model after a breaf explanation of the security properties of our system.
+Will follow an in depth analysis of each threat previously mentioned in the threat model after a brief explanation of the security properties of our system.
 Each subsection will explain for each threat the scenario and its causes, providing also the consequent residual risk.
 
 \begin{table}[H]
@@ -32,20 +32,20 @@ It is important to note, that the analysis refers to five properties of the syst
 
 \subsection{Unauthorized User}
 The attacker is a person who holds no attribute that satisfies the policy of a section; it can be an employee outside the required department or even an outsider with a stolen password.
-They could try to obtain a token without the 2FA, but the only way to login is the Authorization Code flow that is hosted by the identity provider and PABEL's client doesn't enable direct password grant, so any attempt without the 2FA authorized by the realm is uneffective.
+They could try to obtain a token without the 2FA, but the only way to login is the Authorization Code flow that is hosted by the identity provider and PABEL's client doesn't enable direct password grant, so any attempt without the 2FA authorized by the realm is ineffective.
 
 An attacker could also attempt to raise its own attributes, but those fed a key that can only be edited by an administrator, never by a user.
 Even a forged token wouldn't work, since the server verifies its signature against the keys published by the realm and also its issuer and expiration.
 
-Finaly, a malevolent actor could try to directly read the file, but everything sensible is in form of a ciphertext, hence the cryptography is the security measure.
+Finally, a malevolent actor could try to directly read the file, but everything sensible is in form of a ciphertext, hence the cryptography is the security measure.
 No key without the correct attributes satisfies a given policy, thus cannot decrypt it \cite{bethencourt2007ciphertext}: the denial does not rest on a check that could be skipped.
 
 \paragraph{Residual risk} A user is, by design, able to read what their attributes allow and what they do with it is addressed in section \ref{sec:postdecryption}.
 
 \subsection{Unauthorized Agent}
-The attacker is an agent that the organization has not approved, or an apporved one that must not serve a given user.
+The attacker is an agent that the organization has not approved, or an approved one that must not serve a given user.
 An installation that is unknown, revoked or belonging to a disabled product will always fail the verification and the request will be denied.
-In case of a valid installation, but used by someone not intended or simply wihtout the role required by its product is not rejected, but instead is treate like it has no attributes, thus every section which name the agent will stay close.
+In case of a valid installation, but used by someone not intended or simply without the role required by its product is not rejected, but instead is treated like it has no attributes, thus every section which name the agent will stay close.
 
 \paragraph{Residual risk} The consequences of this design must be kept in mind by who writes the policies.
 A section whose policy does not name any agent is satisfied by the user alone through \textit{any} recognized installation.
@@ -59,7 +59,7 @@ The structure itself is anti-collusion, i.e. nothing in the pair can add attribu
 It is important to underline that even a user with two installations cannot merge them, since a request uses only one of them and having one with two agents would never be satisfied.
 
 \subsection{Prompt Injection}
-Content processed by the agent (a page, a file, the output of a tool, etc...) carries instruction that do not correspont to the ones of the user (e.g. read a protected document, obtain credential, disable enforcement, etc...).
+Content processed by the agent (a page, a file, the output of a tool, etc...) carries instruction that do not correspond to the ones of the user (e.g. read a protected document, obtain credential, disable enforcement, etc...).
 
 An attacker could controls the content but nothing else, neither the machine nor the tokens.
 They could ask ultimately three things:
@@ -84,7 +84,7 @@ Any of these, singularly taken, is not enough to read a protected document.
 An attacker, with only a user token could obtain a key that lacks the attributes of the agent, thus every section tied to a specific agent stays closed; vice versa if an attacker has only an installation token it will still require a human login with 2FA.
 In any case tokens have a limited lifetime, furthermore, an installation can be revoked simply fagging it and a user could be easily disabled by the identity provider.
 
-\paragraph{Residual risk} The cached keys are decryption keys: whoever holds them can decrypt offline whatever attributes they satisfy, althoudh they cannot generate other keys.
+\paragraph{Residual risk} The cached keys are decryption keys: whoever holds them can decrypt offline whatever attributes they satisfy, although they cannot generate other keys.
 \textbf{N.B.} In this work, both keys and secrets are, respectively, in PostgreSQL and in a directory of the client, with no further protection (see Section \ref{Future Development}).
 
 \subsection{Network Attacker}
@@ -102,7 +102,7 @@ The consequences are nevertheless bounded, since document not yet read are still
 
 \subsection{Master Key Compromise}
 Whoever holds the master secret key can generate a key for any set of attributes and no policy could resist them: the authority is the root of trust of the whole system (Section \ref{Background}).
-Ideally, the key is created inside the server, never sent elsewhere and used only by the server itself whithin the scope of the authoring tool (see \nameref{ABEditor}).
+Ideally, the key is created inside the server, never sent elsewhere and used only by the server itself within the scope of the authoring tool (see \nameref{ABEditor}).
 Its custody is assumed in the threat model (Section \ref{Motivation and Threat Model}) and the only remedy to such scenario is a new authority that would make previous encrypted document unreadable.
 
 \subsection{Post-Decryption Leakage}\label{sec:postdecryption}

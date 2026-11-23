@@ -25,7 +25,7 @@ since it is not simply represented as a small-degree polynomial.
 \end{quote}
 They proposed a scheme that allows to perform approximate computations on encrypted data, not without open problems, like the need to convert said scheme in a fully homomorphic scheme using bootstrapping. This problem was later addressed by \citeauthor{de2025encryptedllm} who proposed a GPU-based workflow by extending the capabilities of OpenFHE \cite{al2022openfhe}.
 
-Said implementations is undoubtly a great step forward towards practical encrypted LLM, but it has still non trivial limitations:
+Said implementations is undoubtedly a great step forward towards practical encrypted LLM, but it has still non trivial limitations:
 \begin{quote}
     Although promising given the massive overheads involved in both LLMs
     and FHE (Fully Homomorphic Encryption), this is still far from practical for real-world usage,
@@ -38,7 +38,7 @@ The main problem is that, even with a GPU-accelerated implementation, the bootst
 To this we have to take in account also that by approximating the functions needed to have LLM inference we are introducing a source of error that translates into a loss of accuracy in the final result.
 Both of this factors alone make Homomorphic Encryption, as per today, not viable to be used in application such as chatbot or coding agents and it is clear why Attribute-Based Encryption could fill the gap in this point and time by providing security precisely where the FHE, at the moment, cannot provide.
 \subsubsection{Limitations of Trusted Execution Environments}
-Trusted Execution Environmets, as the name suggests, are trusted environment where it is possible to execute critical operation and, in the context of prompt injection and LLM, potentially separate a network or an entire device from the execution of malicious actions by the agent that, in fact, would only be relegated in a sandbox.
+Trusted Execution Environments, as the name suggests, are trusted environment where it is possible to execute critical operation and, in the context of prompt injection and LLM, potentially separate a network or an entire device from the execution of malicious actions by the agent that, in fact, would only be relegated in a sandbox.
 
 \citeauthor{geppert2022trusted} define TEEs as following:
 \begin{quote}
@@ -69,7 +69,7 @@ Those designs store a policy in a database's row that the same service evaluates
 The document is in plaintext or encrypted with a key held onto the same service, but in PABEL the policy is bound to the ciphertext, thus a file copied outside the system stays unreadable.
 
 \paragraph{Identity of agents.}
-Authantication of agents is being discussed in the OAuth/OpenID community \cite{oauth-ai-agents-on-behalf-of-user-02} and in the MCP authorization specification \cite{mcpspec}.
+Authentication of agents is being discussed in the OAuth/OpenID community \cite{oauth-ai-agents-on-behalf-of-user-02} and in the MCP authorization specification \cite{mcpspec}.
 Existing proposal identify a client acting on behalf of a user, but the resulting identity is used to authorize API calls and not as an attribute that enters a cryptographic policy.
 Using the harness as an attribute of the key is, to our knowledge, specific to this work.
 
@@ -104,13 +104,13 @@ The actors, with their own goals, involved in the system are:
     \item \textbf{User:} the user is the person that wants to use an AI agent to process a document. The user has a set of attributes that define their access rights to the document.
     \item \textbf{AI Agent:} the AI agent is the entity that retrieves and processes the document. The AI agent has a set of attributes that define its access rights to the document.
     \item \textbf{Company:} the company is the entity that owns the document and defines the access policy for it, alongside the attributes of the users and the AI agents. The company is responsible for ensuring that the access policy is enforced and that the sensitive data is protected.
-    \item \textbf{IT/Cybersec:} the company's departments responsable for the security of the documents (i.e. encrypting, authorizing and auditing) and the company allthoghether
+    \item \textbf{IT/Cybersec:} the company's departments responsible for the security of the documents (i.e. encrypting, authorizing and auditing) and the company altogether
 \end{itemize}
 
 \subsection{Assumptions}\label{Assumptions}
 We assume that the documents subject to protection are already produced and encrypted via Attribute-Based Encryption before being made available to the system described in this work. Authoring a new document, defining its access policy, ensuring the freshness of employees' attributes, generating the corresponding keys, encrypting the document, are all separate concerns and fall out of the scope of this thesis, which focuses on enforcing, at read time, a mechanism that allows an AI agent to process the document following a safe workflow, minimizing the risk of sensitive data exfiltration.
 
-We also assume that our garantees end at the moment decrypted content is legitimately handed to the requesting AI agent, in accordance with the CP-ABE policy and the combined attributes of the user and the agent.
+We also assume that our guarantees end at the moment decrypted content is legitimately handed to the requesting AI agent, in accordance with the CP-ABE policy and the combined attributes of the user and the agent.
 What the agent does with that content afterwards is not something an access-control layer, operating at application level, can control and it is, therefore, out of scope. There is an exception worth to mention, that is locally materialized copies which are time-bounded and removed automatically at the end of a session, to limit possible unbounded exposure.
 
 By design, the system assumes that the encrypted documents are \code{.abe} files, that is they carry a predefined structure (as defined in Section \ref{File Structure}) that can be read without decrypting them and are recognised by their extension.
@@ -120,21 +120,21 @@ In this section we'll describe what entities are considered as adversary.
 By default, we assume the worst case scenario: both AI agent and its Vendor are not trusted, nor the user itself.
 Mainly, we can differentiate three different threat entities:
 \begin{itemize}
-    \item \textbf{AI agent / Vendor:} the agent itself can be "too curious", it can be compromized or worse, its vendor can actively try to use customer data for its own goals (see \ref{Context and Motivations}). It's important to assume the worst case scenario, and to don't trust the model.
+    \item \textbf{AI agent / Vendor:} the agent itself can be "too curious", it can be compromised or worse, its vendor can actively try to use customer data for its own goals (see \ref{Context and Motivations}). It's important to assume the worst case scenario, and to don't trust the model.
     \item \textbf{User:} both by error and intentionally, a user could try to use its AI agent to read something outside the user's authorization level.
     \item \textbf{Attacker:} an external entity that could also intercept traffic data and, possibly, forge malicious content.
 \end{itemize}
-It is imperative to understand and prevent possible data leaks, hence our proposal to put at risk only a certain part of confidential data (choosen by the company or who possess them).
+It is imperative to understand and prevent possible data leaks, hence our proposal to put at risk only a certain part of confidential data (chosen by the company or who possess them).
 
 It's also important to note that there are goals outside this work's scope such as:
 \begin{itemize}
     \item \textbf{OS/Endpoint already compromised:} if an attacker has already access to the machine, it is quite easy to see how this system cannot ensure its premises.
     \item \textbf{Secure storage of CP-ABE master key:} the CP-ABE master key is assumed to be protected by the company through appropriate measures to store it safely; its compromise would void every guarantee of the system.
-    \item \textbf{Agent behaviour post reception of confidential data:} it is impossible for this system to control what an agent will do to a file once recieved. After the reception of the file, adequatly decrypted, it is responsability of the user what will happen to the data.
-    \item \textbf{DoS attacks:} this system does not guarantee the availability, but the adequate confidenciality of data.
+    \item \textbf{Agent behaviour post reception of confidential data:} it is impossible for this system to control what an agent will do to a file once received. After the reception of the file, adequately decrypted, it is responsibility of the user what will happen to the data.
+    \item \textbf{DoS attacks:} this system does not guarantee the availability, but the adequate confidentiality of data.
 \end{itemize}
 \subsection{Security Goals}
 The end goal of this work is to provide a simple way to handle sensitive data with a fine-grained access control enforced by a company, such that its own employee could not provide leaks whenever they use an AI agent beyond their authorization, since the access control mentioned above.
 This allow also to audit each and every operations on encrypted files, that is offering an invaluable tool for Cybersec/IT departments, which could easily track any eventual misbehaviour.
 
-Our work certainly benefit corporate environments, but also any enviornment where it is wanted to limit what agents can see and therefore where more controlled access is needed, whit a consequent help on data leak control.
+Our work certainly benefit corporate environments, but also any environment where it is wanted to limit what agents can see and therefore where more controlled access is needed, whit a consequent help on data leak control.

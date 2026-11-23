@@ -1,10 +1,10 @@
 \subsection{Attribute-Based Encryption}\label{ABE}
 Attribute-Based Encryption, as the name suggest, is a type of encryption that enforce an access control via attributes and authorization policies. The secret key of a user and the ciphertext are both dependent by attributes.
 
-First proposed as a concept in 1984 to avoid distributing certificates as Identity-Based Encryption, it was later improved and implemented in the first years of 2000s becoming Attribute-Based Encryption; it presents two main types of encription schemes: the \textbf{key-policy attribute-based encryption (KP-ABE)} \cite{goyal2006attribute} and the \textbf{ciphertext-policy attribute-based encryption (CP-ABE)} \cite{bethencourt2007ciphertext}.
+First proposed as a concept in 1984 to avoid distributing certificates as Identity-Based Encryption, it was later improved and implemented in the first years of 2000s becoming Attribute-Based Encryption; it presents two main types of encryption schemes: the \textbf{key-policy attribute-based encryption (KP-ABE)} \cite{goyal2006attribute} and the \textbf{ciphertext-policy attribute-based encryption (CP-ABE)} \cite{bethencourt2007ciphertext}.
 
 \subsubsection{From Identity-Based to Attribute-Based Encryption}
-Identity-Based Encryption is a type of public key cryptography based on PKI (Public-Key Infrastructure), with the main difference being the fact that IBE allows a 1 to 1 relationship between sender and reciever.
+Identity-Based Encryption is a type of public key cryptography based on PKI (Public-Key Infrastructure), with the main difference being the fact that IBE allows a 1 to 1 relationship between sender and receiver.
 As \citeauthor{shamir1984identity} said in his paper \cite{shamir1984identity}:
 \begin{quote}
     The scheme is based on a public key cryptosystem with an extra twist: Instead of generating a random pair of public/secret keys and
@@ -23,11 +23,11 @@ Where
     \item $s,t$ is the signature,
     \item $i$ is the user's identity,
     \item $n$ is the product of large primes,
-    \item $e$ is a large prime reltively prime to $\phi(n)$,
+    \item $e$ is a large prime relatively prime to $\phi(n)$,
     \item $f$ is a one way function.
 \end{itemize}
 
-IBE applications are quite immediate to understand, for example, the ability to ensure that only a given person could read a message, without relying on the PKI, is quite remarcable. There is, anyway, a trust assumtpion towards the Private Key Generator (PKG), which if compromised would nullify the secrecy of every encrypted data that use its issued keys.
+IBE applications are quite immediate to understand, for example, the ability to ensure that only a given person could read a message, without relying on the PKI, is quite remarkable. There is, anyway, a trust assumption towards the Private Key Generator (PKG), which if compromised would nullify the secrecy of every encrypted data that use its issued keys.
 
 Besides, IBE did point towards ABE; we can see how \citeauthor{sahai2005fuzzy} already introduced an ABE approach while proposing a Fuzzy Identity-Based Encryption. They did note how a system where an authority gave a user different keys for each of the attributes that describe the user could easily fall prey of collusion attacks, where multiple users combine their keys to form identities, with a combination of said attributes, that could decrypt ciphertext which none of the individual user could be able to decrypt alone \cite{sahai2005fuzzy}.
 This occurs by considering an identity as a set of attributes and, precisely for that, FIBE for the first time achieved error tolerance; it allows for a private key for an identity, say $\omega$, to decrypt a ciphertext encrypted with an identity $\omega'$ if and only if $|\omega \cap \omega'| \geq d$, where $d$ is fixed during the setup and indicates the error tolerance threshold.
@@ -38,11 +38,11 @@ The main difference between KP and CP ABE is their approach to the policy needed
 While in the Key-Policy ABE the key holds the policy for the identity, in the Ciphertext-Policy ABE is the ciphertext that holds said policy.
 In other words, for a KP approach, think of a company that encrypt all its mails with the headers as attributes, say\\
 \noindent
-\code{\{reciever: developers, object: project-x, date: 20-dec\}}
+\code{\{receiver: developers, object: project-x, date: 20-dec\}}
 \noindent\\
-When an analist, for a given reason, has to read those mails it will recieve a new key suited for the occasion, for example:\\
+When an analyst, for a given reason, has to read those mails it will receive a new key suited for the occasion, for example:\\
 \noindent
-\code{(reciever=developers AND object=project-x) OR (date>20-dec)}
+\code{(receiver=developers AND object=project-x) OR (date>20-dec)}
 \noindent\\
 This key and this key alone can decrypt the mails that satisfy the key's rule.
 
@@ -74,13 +74,13 @@ Moreover, even if both approaches are collusion resistant (i.e. a user with attr
 
 First, the policy is fixed when the document is encrypted. This is acceptable here because a given policy expresses a decision taken beforehand by the company: changing it requires re-encrypting the document, an operation that neither a user nor an agent can perform. Since the decryption is not performed client-side, it also shifts the computational overhead entirely to a server.
 
-Second, the policies being monotone, which means \textit{access can only be granted and never subtracted by a negation}, is a deny-by-default behaviour that works perfectly in a scenario in which we want to \textit{specify who is permitted to read specific information}. Basically, anything that falls out of the scope prior defined by the document's owner is denied. This follows tha same reasoning behind a whitelist firewall, which is generally considered safer than a blacklist one: a blacklist \textit{must} anticipate every possible threat, so whatever is not foreseen is allowed, whereas a whitelist enumerates only what is legitimate, hence whatever is not foreseen is blocked.
+Second, the policies being monotone, which means \textit{access can only be granted and never subtracted by a negation}, is a deny-by-default behaviour that works perfectly in a scenario in which we want to \textit{specify who is permitted to read specific information}. Basically, anything that falls out of the scope prior defined by the document's owner is denied. This follows the same reasoning behind a whitelist firewall, which is generally considered safer than a blacklist one: a blacklist \textit{must} anticipate every possible threat, so whatever is not foreseen is allowed, whereas a whitelist enumerates only what is legitimate, hence whatever is not foreseen is blocked.
 
-Third, revoking keys is notoriously hard, but in our system neither the user nor the agent ever holds one: keys are kept server-side, so revoking an agent is litterally a matter of deleting a database entry or updating it with a "revoked" flag.
+Third, revoking keys is notoriously hard, but in our system neither the user nor the agent ever holds one: keys are kept server-side, so revoking an agent is literally a matter of deleting a database entry or updating it with a "revoked" flag.
 
 Finally, CP-ABE relies on a single central authority that holds the master key; for a company that needs a single point of control and auditing, this is a feature rather than a drawback, although it places the server inside the trusted computing base.
 \subsection{Identity and Access Management}
-Identity and Access Management (IAM) is a set of processes and technologies that establish \textit{who} is making a request (authentication) and \textit{what} that party is allowed to do (authorization), keeping both decisions in a single, auditible place.
+Identity and Access Management (IAM) is a set of processes and technologies that establish \textit{who} is making a request (authentication) and \textit{what} that party is allowed to do (authorization), keeping both decisions in a single, auditable place.
 A modern IAM typically provides a single sign-on (SSO), multi-factor authentication and a central directory of users together with their attributes (e.g. department, role, etc...).
 
 \begin{figure}[h]
@@ -98,7 +98,7 @@ The user authenticates against an authorization server, which issues the token t
 Is it through such claims that user attributes can travel from the IAM to the other parts of the system.
 
 In the Authorization Code flow the client first receives a temporary \textit{authorization code} through a redirect and then exchanges it for a token. For public clients, such as command line tools or mobile and desktop applications, this code can be intercepted by a malicious application on the same device and the client has no safe place to store a secret that would prevent its use \cite{rfc7636}.
-Proof Key for Code Exchange (PKCE) closes this gap by generating a random \textit{code verifier} for each client's request and sends only its trasformation
+Proof Key for Code Exchange (PKCE) closes this gap by generating a random \textit{code verifier} for each client's request and sends only its transformation
 \begin{equation}
     \texttt{code\_challenge} = \mathrm{BASE64\_URL}\big(\mathrm{SHA256}(\mathrm{ASCII}(\texttt{code\_verifier}))\big)
 \end{equation}
@@ -135,7 +135,7 @@ And clients may offer, on the other end, \textbf{\textit{Elicitation}}, that is 
 
 However, in any situation, since the powerful capabilities through arbitrary data access and code execution, an implementor \textit{must} carefully address \textbf{user explicit consent and} persistent \textbf{control} over what data is shared; \textbf{data privacy}, taking the appropriate measures, and ensuring that hosts must obtain explicit user consent before exposing data to servers; last, but not least, \textbf{tool safety}, since every tool represent an \textit{\textbf{arbitrary code execution}}.
 
-For our purposes, MCP provides not only a resource server, but also the legitimate channel through which the agent asks for a document: the server owns the decryption logic and returns only the content that the policy allows. The idea is to offer to agents a black box to interact with, so they would never handle sensitive informations or at least they would not be capable to retrieve what it is not them permitted.
+For our purposes, MCP provides not only a resource server, but also the legitimate channel through which the agent asks for a document: the server owns the decryption logic and returns only the content that the policy allows. The idea is to offer to agents a black box to interact with, so they would never handle sensitive information or at least they would not be capable to retrieve what it is not them permitted.
 \subsection{Hook-Based Interception in AI Coding Agents}
 Many coding agents expose \textbf{\textit{hooks}}, i.e. user-defined command that the agent's runtime execute at precise points of its lifecycle, such as before a tool call (\code{PreToolUse}), which can also block the call \cite{claudehooks,copilothooks}.
 In Claude Code, for instance, the hook receives the description of the event as JSON on standard input (tool name and arguments) and answers with a decision: allow the call, deny it with a reason, rewrite its input (\code{updatedInput}) or add context for the model (\code{additionalContext}).
@@ -144,4 +144,4 @@ The crucial property is where the hook runs. An instruction written in a prompt 
 A hook is, instead, executed at runtime \textit{outside} the model's reasoning, hence its decision does not depend on the model's cooperation. This is why \textbf{we implement enforcement as a hook} and use \textbf{skills}, informationally, \textbf{only to explain to the agent \textit{why} a read was replaced}.
 
 Hooks are however not uniform across vendors. Copilot CLI, for example, documents a similar \code{preToolUse} event with a \code{permissionDecision} field, but it names the field that rewrites the arguments differently (\code{modifiedArgs}) and supports both camelCase and PascalCase formats \cite{copilothooks}.
-Moreover, some channels are not reliably delivered in practise (see the adapters in Section \ref{System Design}). This heterogenity motivtes the per-agent adapters of our design.
+Moreover, some channels are not reliably delivered in practise (see the adapters in Section \ref{System Design}). This heterogeneity motivates the per-agent adapters of our design.

@@ -4,7 +4,7 @@ The main question we want to address are:
 \begin{itemize}
   \item Does the system give exactly the sections the corresponding policy allows?
   \item Does the system resist the attacks defined in the threat model (Section \ref{Motivation and Threat Model})?
-  \item How mnay resources the system uses?
+  \item How many resources the system uses?
   \item Does the system works on a single machine with more than one agent?
 \end{itemize}
 Each of those questions is addressed in the following subsections.
@@ -35,9 +35,8 @@ It is also important to note that we have used fictitious users defined with the
 \end{table}
 
 \subsection{Automated Tests}
-Table \ref{tab:eval-unit} lists the 258 automated tests by area. They do not need neither containers, nor database, nor OpenABE, htey tests the actual code, i.e. the decision logic, the agent adapters, the installers and the client.
+Table \ref{tab:eval-unit} lists the 258 automated tests by area. They do not need neither containers, nor database, nor OpenABE, they tests the actual code, i.e. the decision logic, the agent adapters, the installers and the client.
 
-% ---------------------------------------------------------------- unit tests
 \begin{table}[H]
   \centering
   \begingroup\linespread{1.0}\small
@@ -62,7 +61,7 @@ Table \ref{tab:eval-unit} lists the 258 automated tests by area. They do not nee
 Each document was opened by every user-agent pair and for each section the observed outcome was compared with the one expected from its policy and from the attributes of the pair.
 Table \ref{tab:eval-matrix} reports the number of readable sections.
 
-The same user obtains different sections through different agents (e.g. alice: 3/3 with Claude Code, 2/3 with opencode) and an installation used without its role is recognized but recieves no agent attributes (e.g. bob with opencode).
+The same user obtains different sections through different agents (e.g. alice: 3/3 with Claude Code, 2/3 with opencode) and an installation used without its role is recognized but receives no agent attributes (e.g. bob with opencode).
 
 Reads recorded during development (Table \ref{tab:eval-audit}) show the same pattern, but they come from usage and not from a controlled experiment.
 
@@ -160,9 +159,8 @@ This exercises the cryptographic enforcement and the policy semantics, not the h
 
 \subsection{Security Tests}
 The scenarios of Table \ref{tab:eval-security} were run through the real entry point of the hook, without a server and with fake credentials, so they test the interception and not the server.
-Since they were written together with the rules, they are regression tests more than indepentent evidence. For this reason, the same attacks were repeated in a different way (Table \ref{tab:eval-probes}).
+Since they were written together with the rules, they are regression tests more than independent evidence. For this reason, the same attacks were repeated in a different way (Table \ref{tab:eval-probes}).
 
-% ---------------------------------------------------------------- security
 \begin{table}[H]
   \centering
   \begingroup\linespread{1.0}\small
@@ -186,7 +184,7 @@ Since they were written together with the rules, they are regression tests more 
   \caption{Attack scenarios run through the real hook entry point, without a server and with fake credentials. In U1--U5 the plaintext of the document never appears in the output; in J2 an \code{agent\_token} forged by the model is replaced by the one of the installation.}\label{tab:eval-security}
 \end{table}
 
-None of the eight variants was blocked. The credential check compares the litteral path, so \code{\textasciitilde}, \code{\$HOME}, a search or a glob on the credential folder escape it.
+None of the eight variants was blocked. The credential check compares the literal path, so \code{\textasciitilde}, \code{\$HOME}, a search or a glob on the credential folder escape it.
 The rules on \code{oabe\_*} binaries and on the connector modules, apply only to the \code{Bash} tool and the protection of the configuration only to \code{Write} and \code{Edit}.
 These gaps do not expose protected documents, which remain ciphertext, nor allow acting alone as a user, because both principals are still required (Section \ref{Security Analysis}). They do show that the claim that the model cannot read the credential holds only for the literal path, and they are listed in Section \ref{Future Development}.
 
@@ -401,7 +399,6 @@ The hook is a new process for every tool call and adds about 0.8~s to each of th
   \caption{Cost of the hook on a call that does not touch a protected document. Median of 60 runs, whiskers up to the 95th percentile.}\label{fig:eval-hook}
 \end{chart}
 
-% ---------------------------------------------------------------- performance
 \begin{table}[H]
   \centering
   \begingroup\linespread{1.0}\small
@@ -456,11 +453,16 @@ Part IX requires \code{security}, \code{dev} or \code{manager} together with Cla
 Part VIII requires \code{legal} or \code{executive} and \code{agent\_claude\_code}: alice and Charlie both hold \code{executive}, but only alice uses Claude Code, so Charlie does not receive it.
 This is the condition on both the user and the agent that PABEL enforces.
 
-Each user obtains only the regions its pair can read: in the recomposed PDF the others leave an empty space, and in the textual result they are marked with \code{[ACCESS DENIED]}.
+Each user obtains only the regions its pair can read: in the recomposed PDF the others leave an empty space, and in the textual result they are marked with \code{[ACCESS DENIED]}, thus not making them visible (we point out that is it possible, anyhow, to request to a given agent those sections explicitly marked as \code{[ACCESS DENIED]} as we can see in the figure \ref{fig:access-denied}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{media/image/nexora_access_denied.pdf}
+  \caption{Page 3 of the NEXORA dossier for Bob through Claude Code, from an earlier decryption in which every region that the pair cannot read is explicitly marked with a box labelled \code{ACCESS DENIED}. Only Part V, which Bob can read, appears as text.}\label{fig:access-denied}
+\end{figure}
 
 \subsection{Summary of the Results}
 
-% ---------------------------------------------------------------- summary
 \begin{table}[H]
   \centering
   \begingroup\linespread{1.0}\small

@@ -1,11 +1,11 @@
 \subsection{The OpenABE Library}\label{sec:openabe}
-The cryptography used in PABEL is provided by OpenABE \cite{openabe}, an open-source C/C++ library that implements ciphertex-policy and key-policy ABE together with command-line tools used for key generation and decryption.
+The cryptography used in PABEL is provided by OpenABE \cite{openabe}, an open-source C/C++ library that implements ciphertext-policy and key-policy ABE together with command-line tools used for key generation and decryption.
 
 The upstream version (v 1.0.0), last updated in May 2023, is written in C++11 and depends on OpenSSL 1.1.1 and RELIC 0.5.0.
 It was necessary an upgrade of those dependency since, trying to building it on Windows, many errors occurred, from installation ones to logic ones.
 Therefore we ported the library to OpenSSL 4.0.1, RELIC 0.7.0 and C++17, thus making available a build on Windows (MSYS2) and on the Ubuntu image on the server.
 
-Said port is released as a fork \cite{openabefork} under the same AGPL-3.0 license, where small bugs found along the way were fixed with also contributions made from the community, which we sentitely appriciate. 
+Said port is released as a fork \cite{openabefork} under the same AGPL-3.0 license, where small bugs found along the way were fixed with also contributions made from the community, which we sincerely appreciate. 
 
 \subsection{Architecture Overview}
 Our system is composed by two main component:
@@ -13,7 +13,7 @@ Our system is composed by two main component:
     \item \textbf{server-side components:} the components include Identity and Access Management (\textbf{Keycloak}), database (\textbf{Postgres}), MCP server that handles logic (with \textbf{OpenABE}).
     \item \textbf{client-side connectors:} adapter and hook grant connection and control over the AI agent.
 \end{itemize}
-The server-side components are designed to be each one indipendent from the others; we have containerized each one of them with \code{containerd} and made them available with Rancher Desktop.
+The server-side components are designed to be each one independent from the others; we have containerized each one of them with \code{containerd} and made them available with Rancher Desktop.
 
 Client-side there are two parts essential to the correct flow of the program: there is an adapter for each agent and a hook that is the real intermediary between the server-side and the agent.
 \subsection{Early Prototyping}
@@ -83,7 +83,7 @@ It's quite easy to point out that this implementation is very inefficient when t
 \end{lstlisting}
 This structure provides one key feature: the ability to call the decrypt function $n$ times, where $n$ is the number of unique policies used to rules the sections. This is a more sustainable approach than v1, since, in that case, the decrypt function would be called exactly $m$ times, where $m$ is the amount of each section in the document. It's a fair assumption to say that $m$, \textit{usually}, is greater than $n$.
 \subsubsection{From a Viewer to ABEditor}
-PABEL only decrypts, so the server never encrypts and, as stated in the assumptions (see \ref{Assumptions}), authoring a document is a taks demanded to whoever uses this system.
+PABEL only decrypts, so the server never encrypts and, as stated in the assumptions (see \ref{Assumptions}), authoring a document is a task demanded to whoever uses this system.
 To test it, however, there had to be a tool that produced documents with controlled policies and that showed what each identity should see.
 That tool started to be implemented as a simple viewer, later evolved together with the rest of the work until it became ABEditor, an application meant for said third party and never installed on a client machine. The following table \ref{tab:editor} summarize its stages:
 
@@ -95,7 +95,7 @@ That tool started to be implemented as a simple viewer, later evolved together w
     \textbf{Stage} & \textbf{Problem} & \textbf{Result} \\
     \midrule
     Command-line scripts & verify CP-ABE and numeric hierarchy on a text with section markers & one ciphertext per section, three demo users with keys in files \\
-    \code{.abe} v1 and v2 & decryptions grow with the number of sections & one ciphertext per disticnt policy \\
+    \code{.abe} v1 and v2 & decryptions grow with the number of sections & one ciphertext per distinct policy \\
     Graphical viewer & read and edit a document as a given user & open, edit and save a \code{.abe} file \\
     Keycloak identity and first service & use the identity of a real user and let an agent read & keys created in advance and kept in a local keystore, an MCP server with three read-only tools returning every section \\
     First hook & prevent the agent from reading the file directly & direct reads blocked and redirected to the MCP tool \\
@@ -114,8 +114,8 @@ The fourth and fifth stages are the core of PABEL. In that early stage, the keys
 In summary this editor was needed for three principal reasons:
 \begin{itemize}
   \item \textbf{Purpose-build documents:} PABEL itself cannot produce documents and there was the need to being able to create a document with multiple policies avoiding an "all or nothing" outcome.
-  \item \textbf{Oracle:} A test needs an expected result that does not come from the system being tested, otherwhise a mistake of the system would be repared in the expectation. Hence the editor provides it as an oracle for the needed tests.
-  \item \textbf{Controlled variation:} We had to make sure that in an encrypted document every section and distinct policy could be varied indipendently of each other; thus the editor allowed us to produce and edit such documents.
+  \item \textbf{Oracle:} A test needs an expected result that does not come from the system being tested, otherwise a mistake of the system would be repeated in the expectation. Hence the editor provides it as an oracle for the needed tests.
+  \item \textbf{Controlled variation:} We had to make sure that in an encrypted document every section and distinct policy could be varied independently of each other; thus the editor allowed us to produce and edit such documents.
 \end{itemize}
 
 \subsubsection{What it does Today}
@@ -124,19 +124,19 @@ A PDF can be protected by drawing regions, each with its own policy over a publi
 The part of the page outside the regions is readable by anyone holding the file and the copies exported to a reader of the system are plain PDFs that no longer have any protection.
 
 \subsection{CP-ABE Authority and Key Management}\label{CP-ABE Authority and Key Management}
-It is clear that we have to have a central autorithy that could audit and grant accesses to documents. This operation is made by conjuncting both \textbf{Keycloak} and \textbf{Postgres}:
-While \textbf{Keycloak} holds the informations of every user (e.g. mail, department, security level, etc...) and so their attributes, \textbf{Postgres} holds the registry of the allowed agents and the keys in use, one for each pair of user and agent; those attributes are, then, merged in a single key, which is the one the server uses to decrypt.
+It is clear that we have to have a central authority that could audit and grant accesses to documents. This operation is made by combining both \textbf{Keycloak} and \textbf{Postgres}:
+While \textbf{Keycloak} holds the information of every user (e.g. mail, department, security level, etc...) and so their attributes, \textbf{Postgres} holds the registry of the allowed agents and the keys in use, one for each pair of user and agent; those attributes are, then, merged in a single key, which is the one the server uses to decrypt.
 
 The concept is simple: after the server has verified the tokens of user and agent, it takes the resultant key of that pair from the database and uses it with \textbf{OpenABE} to serve the decrypt file.
 With this solution nobody needs to have installed its own key and it is strictly handled "in background", to both minimizing the risk of tampering and also to ensure a strict control over the allowed agents (it's easy as deleting a row in a db to disable entirely an agent from being used).
 
 \subsection{Human Identity via Keycloak}
-Obviously, the Keycloak login can be used with two-factor-authentication (it can also enforce a biometric login). The 2FA itself is out of this scope, but we mention \textbf{FreeOTP} as a free tool used for an otp testing and aswell it is strongly suggested that a MFA (Multi Factor Authentication) is used.
+Obviously, the Keycloak login can be used with two-factor-authentication (it can also enforce a biometric login). The 2FA itself is out of this scope, but we mention \textbf{FreeOTP} as a free tool used for an otp testing and as well it is strongly suggested that a MFA (Multi Factor Authentication) is used.
 
 Once the user is logged in, and we can assume it is authenticated, then we can proceed to concede a token which contains the relevant attributes and those will be used to create the key of said user.
 
 \subsection{Agent Identity Model}\label{Agent Identity Model}
-In the adversary model of this work the AI agnet is not trusted, so a policy that mentions the agent cannot rely on anything the agent declares about itself.
+In the adversary model of this work the AI agent is not trusted, so a policy that mentions the agent cannot rely on anything the agent declares about itself.
 The identity of the agent \textit{must} be established the same way as the identity of the human, that is by a credential that the agent cannot forge, verified by the server on every call.
 
 \subsubsection{What is Identified: Harness, Surface and Model}
@@ -159,7 +159,7 @@ On every call the server verifies the agent token as it does for the human one (
 \begin{enumerate}
   \item the \code{azp} (authorized party) claim of the token, i.e. \code{client\_id} that obtained it, stamped by Keycloak at issuance;
   \item the matching \code{agent\_installations} row, confirming that the installation exists and has not been revoked;
-  \item the row of the \code{agents} table of the product it belongs to, which tells wheter the product is enabled, which attribute it contribuites (e.g. \code{agent\_claude\_code}, \code{agent\_opencode}) and which role a user must hold to use it.
+  \item the row of the \code{agents} table of the product it belongs to, which tells whether the product is enabled, which attribute it contributes (e.g. \code{agent\_claude\_code}, \code{agent\_opencode}) and which role a user must hold to use it.
 \end{enumerate}
 The \code{agent\_id} comes out of this chain only after the token has been verified: it is never a parameter of a request, so no caller can claim one.
 
@@ -170,7 +170,7 @@ There are two main types for a request denial when trying to authorize an agent.
   \item An \textit{hard error} is considered whenever there is an invalid (or expired) token or when it is present an unknown or revoked installation and a disabled product, hence the request is simply denied.
   \item A \textit{soft error} present itself if the installation is valid, but the user doesn't hold the role that the product requires (e.g. \code{agent\_claude\_code\_user}); the failure, in this case, resolves in the agent that contributes with no attribute at all. The same user is still authenticated, but any policy that names the agent will fail, so no special deny logic is required: not holding the role \textit{is} the denial.
 \end{itemize}
-So, whereas there is no \textit{hard error}, the attributes of the user and the one of the agent are then merged togheter in a single CP-ABE key (see Section \ref{CP-ABE Authority and Key Management}).
+So, whereas there is no \textit{hard error}, the attributes of the user and the one of the agent are then merged together in a single CP-ABE key (see Section \ref{CP-ABE Authority and Key Management}).
 A section sealed under a policy such as \code{sales and agent\_claude\_code} will open only for someone holding \code{sales} \textbf{\textit{and}} working through a registered Claude Code installation; changing either half keeps the section closed.
 
 \begin{figure}[H]
@@ -183,7 +183,7 @@ Starting from this section an harness with hooks is assumed (the others are disc
 The strength of this identity is, however, bound to the protection of the credential store on the employee's machine. Whoever can read it can authenticate as that installation from anywhere; this is the compromised-endpoint scenario that is declared out of scope in the threat model.
 \subsection{Audit Logging}
 Each and every operation the agent make while calling the server is logged, both to track every access to each document and to make every user's accountability verifiable.
-Server-side it is all kept in a \code{audit.jsonl}, for semplicity's sake, but it can be enhanced (see \nameref{Future Development}).
+Server-side it is all kept in a \code{audit.jsonl}, for simplicity's sake, but it can be enhanced (see \nameref{Future Development}).
 
 
 \subsection{Connector Architecture}
@@ -227,7 +227,7 @@ The flow can be summarized in these steps:
   \item It attaches two credentials to the request, neither of which is visible to the model. The first one is the human session and the second one is the installation token.
   \item If there is no valid human session, the hook itself starts the interactive browser login, retrying once. The login itself is hosted by Keycloak and if it fails both tries, the request is denied.
   \item The server verifies both tokens, merges the attributes into a single key and decrypts each group. It return \textit{every} section of the document, each one either in plaintext or as \code{[ACCESS DENIED]}; this way the shape of the document is maintained and it is the same for every caller (no impactful analysis can be done on the size of the network packet).
-  \item The hook returs a denial of the original read whose content is the result of the server. The adapter writes it in the channel of the specific harness (Table \ref{tab:channels}), thus giving it to the model instead of the file.
+  \item The hook returns a denial of the original read whose content is the result of the server. The adapter writes it in the channel of the specific harness (Table \ref{tab:channels}), thus giving it to the model instead of the file.
 \end{enumerate}
 Every failure along the way (no authentication, unreachable server, error of the relay) ends in a denial with a message and never in a direct read, thus ensuring that the agent would not reason on it.
 
@@ -242,10 +242,10 @@ Those are the main function that every harness, even those without hooks (see Se
 In case of a harness with hooks, calls to the tools are allowed after it has injected the token of the installation into their arguments, so that the model never has to hold or manage it.
 
 \paragraph{Local copies}
-When a copy of a document is requested, \code{materialize\_document} writes the recieved content into a local cache. In case of a PDF (or any file, for the matter), it is rebuilt from the single parts that are returned omitting, or (if the user requested it) marking as "ACCESS DENIED", the denied sections.
+When a copy of a document is requested, \code{materialize\_document} writes the received content into a local cache. In case of a PDF (or any file, for the matter), it is rebuilt from the single parts that are returned omitting, or (if the user requested it) marking as "ACCESS DENIED", the denied sections.
 The server's output does not obfuscate the denied parts, it never sends them.
 
-From the moment the document is given, PABEL no longer governs it, which is why the copy is deleted when the session ends, bounding the exposure to one session (see Asssumptions in section \ref{Assumptions}).
+From the moment the document is given, PABEL no longer governs it, which is why the copy is deleted when the session ends, bounding the exposure to one session (see Assumptions in section \ref{Assumptions}).
 \textbf{N.B.} the deletion is implemented for the harnesses that offer a session-end hook, such as currently Claude Code.
 
 \subsubsection{Per-Agent Adapters}
@@ -333,8 +333,8 @@ For an MCP-only agent these protections are not available and the agent is simpl
 
 The status of each harness is reported in Section \ref{Evaluation}
 \subsection{Document Lifecycle}
-The document starts its life whenever it is created and encrypted by somenoe, say a manager, that has to include sensitive information in said document.
-Once the appropriate policy is defined and used to encrypt the document, it is stored (on the endpoint or in a central storage) and it become available through requst at the MCP server.
+The document starts its life whenever it is created and encrypted by someone, say a manager, that has to include sensitive information in said document.
+Once the appropriate policy is defined and used to encrypt the document, it is stored (on the endpoint or in a central storage) and it become available through request at the MCP server.
 The document itself in our demo is stored directly on the client machine, but future developments could also lead to a centralized storage (see \nameref{Future Development}).
 
 \begin{figure}[h]
