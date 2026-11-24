@@ -188,7 +188,7 @@ Server-side it is all kept in a \code{audit.jsonl}, for simplicity's sake, but i
 
 \subsection{Connector Architecture}
 The shared core evaluates every tool call against the checks of Table \ref{tab:decide} in the order shown, and the first one that applies decides.
-Every outcome is also written to a local log (previous installation of a public key for auditing) on the client machine and the denials that would otherwise never reach the server are reported in it, so that it is kept an audit trail.
+Every outcome is also written to a local log (previous the installation of a public key for auditing) on the client machine and the denials that would otherwise never reach the server are reported in it, so that it is kept an audit trail.
 
 \begin{table}[htbp]
   \centering
