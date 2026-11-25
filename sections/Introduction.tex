@@ -1,5 +1,4 @@
 \subsection{Context and Motivations} \label{Context and Motivations}
-% Descrivere il contesto scientifico e tecnologico in cui si colloca l'attività di tesi e quali sono le motivazioni per lo sviluppo del progetto di tesi. (circa 2 pagine)
 The constant and rapid evolution in the field of Artificial Intelligence has result in a day-to-day use of AI agents, thus the need of security and privacy when dealing with tools that, potentially, could harvest personal or company data for a variety of reasons.
 More in detail the concept that we were trying to focus on, was the scenario in which an employee, by chance or intentionally, had its AI agent to look at a confidential file which the company doesn't want to be leaked or simply does not trust the AI agent's vendor.
 
@@ -11,15 +10,17 @@ A second, more institutional, example involves OpenAI: in december 2024, the Ita
 
 Also Anthropic was acting in regard of the guarantees that have to be assumed by a vendor, in particular it had to update its customer terms\cite{anthropic2025terms}. They explicitly stated that each conversation made with Claude could be used for model training, with the exception of Claude for Work, Claude Enterprise, Claude Gov and any API-based access\cite{anthropic2025terms}.
 
-These three examples share a common thread, that is once data leaves an organization's boundary and reaches a third-party model or vendor, the organization has no further technical control over it. This thesis takes the position that this control should not depend on trusting the AI agent's behavior, nor on trusting the vendor's policies, but should instead enforced cryptographically, when accessing the data.
+More recent news showed how the model itself can behave unexpectedly: in october 2026, Cohere reported that, during a security test in sandbox, Qwen 3.8 inspected the machine it was running on and tried to upload a probe file to an Alibaba Cloud storage bucket in Beijing \cite{cohere2026qwen}.
+
+These examples share a common thread, that is once data leaves an organization's boundary and reaches a third-party model or vendor, the organization has no further technical control over it. This thesis takes the position that this control should not depend on trusting the AI agent's behavior, nor on trusting the vendor's policies, but should instead enforced cryptographically, when accessing the data.
 \subsection{Activities done and Results}
-In this thesis, we have designed and implemented a plugin for AI agents that allows to decrypt files using Attribute-Based Encryption (ABE) in order to ensure that only authorized users and authorized AI Agents can access specific parts of the file. The plugin is designed to be easily integrated into existing AI agents, providing a seamless way to enhance security and privacy in AI-driven environments.
+In this thesis, we have designed and implemented \textbf{a plugin for AI agents} that allows to decrypt files using Attribute-Based Encryption (\textbf{ABE}) in order to ensure that only authorized users and authorized AI Agents can access \emph{specific parts} of the file. The plugin is designed to be easily integrated into existing AI agents, providing a seamless way to enhance security and privacy in AI-driven environments.
 
 Such security enhancement is achieved by encrypting files with ABE, which allows for fine-grained access control based on user and AI agent attributes. PABEL intercepts file access requests from the AI agent, authenticates the user and checks, via server, if both the user's attributes and the agent's attributes match the encryption policy; thus the server decrypts the specific parts of the file that both the user and \emph{that} agent are authorized to see and returns it to the agent.
 
 This approach ensures that sensitive information remains protected when accessed by AI agents, since every sensitive information is handled server-side and the agent does not perform any sort of decryption and does not even hold any cryptographic material needed to do so.
 
-The result is a working end-to-end system: a CP-ABE capable MCP server, an agnostic connector that has been verified against multiple agents and a hardened workflow to ensure agents' identities.
+The result is a working end-to-end system: a CP-ABE capable MCP server, an agnostic connector that has been verified against multiple agents and a workflow to ensure agents' identities.
 \subsection{Technologies and Tools}
 To achieve the goals of this thesis, several technologies and tools have been utilized.
 The core of the security mechanism is based on Attribute-Based Encryption (ABE), more in particular we have used the open source library \textbf{OpenABE}\cite{openabe}, which we had to upgrade to a more recent version by updating its dependencies and fixing some bugs that were present in the original code (Section \ref{sec:openabe}).
@@ -37,8 +38,8 @@ The AI agents used for testing are:
 \end{itemize}
 Only Claude Code and OpenCode were verified end to end; the state of the others is reported in Section \ref{sec:eval-coverage}.
 Throughout the project we used Python as main language, as well as Python libraries such as \textbf{PyJWT}, \textbf{FastMCP} and \textbf{Psycopg}.
-The server-side component of the system was containerized using \textbf{Rancher Desktop}, a tool that allows to run Kubernetes clusters on a local machine. This setup enables easy deployment and management of the server component, hence supporting scalability and reliability in handling decryption requests from AI agents.
-Alongside the server container, there were deployed two other containers: one for the Keycloak, which contains identities and attributes, server and another for a \textbf{PostgreSQL} database, which (in combination with Keycloak) store agent installation's information and generated keys. This containerized approach simplifies the deployment process and allows for an easy scaling of the system as needed.
+The server-side component of the system was containerized using \textbf{Rancher Desktop}, a tool that also allows to run Kubernetes clusters on a local machine. This setup enables easy deployment and management of the server component, hence supporting scalability and reliability in handling decryption requests from AI agents.
+Alongside the server container, there were deployed two other containers: one for the Keycloak, which contains identities and attributes, server and another for a \textbf{PostgreSQL} database, which (in combination with Keycloak) store agent installation's information and generated keys. This containerized approach simplifies the structure of the deployment and encapsulate, for each container, its scope.
 
 \subsection{Thesis outline}
 The thesis is structured as follows:
